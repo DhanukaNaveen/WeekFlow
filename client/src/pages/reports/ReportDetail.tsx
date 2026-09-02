@@ -13,12 +13,12 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
     [err, setErr] = useState(""),
     [comment, setComment] = useState(""),
     [selected, setSelected] = useState<any>();
-  const load = () =>
+  useEffect(() => {
     api
       .get(`/reports/${id}`)
-      .then((x) => setR(x.data))
-      .catch((e) => setErr(errorMessage(e)));
-  useEffect(() => { void load(); }, [id]);
+      .then((response) => setR(response.data))
+      .catch((error) => setErr(errorMessage(error)));
+  }, [id]);
   async function action(kind: "approve" | "request-changes") {
     try {
       const x = await api.post(`/reports/${id}/${kind}`, { comment });

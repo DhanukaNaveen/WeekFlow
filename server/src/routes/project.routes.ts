@@ -3,7 +3,6 @@ import { prisma } from "../config/prisma.js";
 import { authorizeRoles } from "../middleware/auth.js";
 import { asyncHandler } from "../middleware/async.js";
 import { projectSchema } from "../validators/schemas.js";
-import { AppError } from "../utils/errors.js";
 export const projectRouter = Router();
 projectRouter.get(
   "/",

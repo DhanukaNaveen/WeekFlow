@@ -1,1 +1,21 @@
-{"name":"weekflow","private":true,"scripts":{"install:all":"npm install --prefix server && npm install --prefix client","dev":"concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"","build":"npm run build --prefix server && npm run build --prefix client","test":"npm test --prefix server"},"devDependencies":{"concurrently":"^9.1.2"}}
+{
+  "name": "weekflow",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "test": "npm test --prefix server",
+    "lint": "eslint client/src server/src server/tests server/prisma/seed.ts"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.35.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "typescript-eslint": "^8.42.0"
+  }
+}

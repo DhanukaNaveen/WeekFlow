@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, errorMessage } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
@@ -27,12 +27,12 @@ export function ReportList() {
       startDate: "",
       endDate: "",
     });
-  const load = () => {
+  const load = useCallback(() => {
     setLoading(true);
     setErr("");
     api
       .get(manager ? "/reports" : "/reports/my", {
-        params: { ...filters, page, limit: pagination.limit },
+        params: { ...filters, page, limit: 10 },
       })
       .then((r) => {
         setItems(r.data.items);
@@ -40,7 +40,7 @@ export function ReportList() {
       })
       .catch((e) => setErr(errorMessage(e)))
       .finally(() => setLoading(false));
-  };
+  }, [filters, manager, page]);
   function changeFilter(name: keyof typeof filters, value: string) {
     setPage(1);
     setFilters((current) => ({ ...current, [name]: value }));
@@ -49,14 +49,9 @@ export function ReportList() {
     api.get("/projects").then((r) => setProjects(r.data));
     if (manager) api.get("/users").then((r) => setUsers(r.data));
   }, [manager]);
-  useEffect(load, [
-    filters.status,
-    filters.projectId,
-    filters.userId,
-    filters.startDate,
-    filters.endDate,
-    page,
-  ]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   return (
     <div className="space-y-5">
       <div className="flex justify-between">

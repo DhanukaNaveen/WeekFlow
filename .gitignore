@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+coverage/
+server/prisma/test.db
+server/prisma/dev.db

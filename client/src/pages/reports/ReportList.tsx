@@ -13,6 +13,13 @@ export function ReportList() {
     [users, setUsers] = useState<User[]>([]),
     [loading, setLoading] = useState(true),
     [err, setErr] = useState(""),
+    [page, setPage] = useState(1),
+    [pagination, setPagination] = useState({
+      page: 1,
+      limit: 10,
+      total: 0,
+      pages: 0,
+    }),
     [filters, setFilters] = useState({
       status: "",
       projectId: "",
@@ -22,12 +29,22 @@ export function ReportList() {
     });
   const load = () => {
     setLoading(true);
+    setErr("");
     api
-      .get(manager ? "/reports" : "/reports/my", { params: filters })
-      .then((r) => setItems(r.data.items))
+      .get(manager ? "/reports" : "/reports/my", {
+        params: { ...filters, page, limit: pagination.limit },
+      })
+      .then((r) => {
+        setItems(r.data.items);
+        setPagination(r.data.pagination);
+      })
       .catch((e) => setErr(errorMessage(e)))
       .finally(() => setLoading(false));
   };
+  function changeFilter(name: keyof typeof filters, value: string) {
+    setPage(1);
+    setFilters((current) => ({ ...current, [name]: value }));
+  }
   useEffect(() => {
     api.get("/projects").then((r) => setProjects(r.data));
     if (manager) api.get("/users").then((r) => setUsers(r.data));
@@ -38,6 +55,7 @@ export function ReportList() {
     filters.userId,
     filters.startDate,
     filters.endDate,
+    page,
   ]);
   return (
     <div className="space-y-5">
@@ -59,7 +77,7 @@ export function ReportList() {
       <div className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <select
           value={filters.status}
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+          onChange={(e) => changeFilter("status", e.target.value)}
         >
           <option value="">All statuses</option>
           {["DRAFT", "SUBMITTED", "NEEDS_CORRECTION", "APPROVED", ...(manager ? ["NOT_STARTED"] : [])].map((x) => (
@@ -68,9 +86,7 @@ export function ReportList() {
         </select>
         <select
           value={filters.projectId}
-          onChange={(e) =>
-            setFilters({ ...filters, projectId: e.target.value })
-          }
+          onChange={(e) => changeFilter("projectId", e.target.value)}
         >
           <option value="">All projects</option>
           {projects.map((p) => (
@@ -82,7 +98,7 @@ export function ReportList() {
         {manager && (
           <select
             value={filters.userId}
-            onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+            onChange={(e) => changeFilter("userId", e.target.value)}
           >
             <option value="">All members</option>
             {users
@@ -98,15 +114,13 @@ export function ReportList() {
           aria-label="From"
           type="date"
           value={filters.startDate}
-          onChange={(e) =>
-            setFilters({ ...filters, startDate: e.target.value })
-          }
+          onChange={(e) => changeFilter("startDate", e.target.value)}
         />
         <input
           aria-label="To"
           type="date"
           value={filters.endDate}
-          onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+          onChange={(e) => changeFilter("endDate", e.target.value)}
         />
       </div>
       {err ? (
@@ -116,8 +130,9 @@ export function ReportList() {
       ) : !items.length ? (
         <Empty message="No reports match these filters." />
       ) : (
-        <div className="table-wrap">
-          <table>
+        <>
+          <div className="table-wrap">
+            <table>
             <thead>
               <tr>
                 {manager && <th>Member</th>}
@@ -156,8 +171,35 @@ export function ReportList() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-500">
+              Showing {(pagination.page - 1) * pagination.limit + 1}–
+              {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
+              {pagination.total} reports
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                className="btn-secondary"
+                disabled={loading || page <= 1}
+                onClick={() => setPage((current) => current - 1)}
+              >
+                Previous
+              </button>
+              <span className="text-sm font-medium text-slate-600">
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <button
+                className="btn-secondary"
+                disabled={loading || page >= pagination.pages}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

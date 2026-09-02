@@ -6,7 +6,11 @@ import type { Project } from "../../types";
 export function ProjectsPage() {
   const [p, setP] = useState<Project[]>(),
     [name, setName] = useState(""),
-    [description, setDescription] = useState("");
+    [description, setDescription] = useState(""),
+    [editingId, setEditingId] = useState<string | null>(null),
+    [editName, setEditName] = useState(""),
+    [editDescription, setEditDescription] = useState(""),
+    [savingId, setSavingId] = useState<string | null>(null);
   const load = () => api.get("/projects").then((r) => setP(r.data));
   useEffect(() => { void load(); }, []);
   async function add() {
@@ -21,8 +25,43 @@ export function ProjectsPage() {
     }
   }
   async function toggle(x: Project) {
-    await api.patch(`/projects/${x.id}`, { isActive: !x.isActive });
-    load();
+    try {
+      setSavingId(x.id);
+      await api.patch(`/projects/${x.id}`, { isActive: !x.isActive });
+      await load();
+      toast.success(x.isActive ? "Project deactivated" : "Project activated");
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setSavingId(null);
+    }
+  }
+  function beginEdit(x: Project) {
+    setEditingId(x.id);
+    setEditName(x.name);
+    setEditDescription(x.description ?? "");
+  }
+  function cancelEdit() {
+    setEditingId(null);
+    setEditName("");
+    setEditDescription("");
+  }
+  async function saveEdit(x: Project) {
+    if (!editName.trim()) return;
+    try {
+      setSavingId(x.id);
+      await api.patch(`/projects/${x.id}`, {
+        name: editName.trim(),
+        description: editDescription.trim() || null,
+      });
+      await load();
+      cancelEdit();
+      toast.success("Project updated");
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setSavingId(null);
+    }
   }
   async function remove(x: Project) {
     if (!confirm(`Delete or deactivate ${x.name}?`)) return;
@@ -64,16 +103,67 @@ export function ProjectsPage() {
           <tbody>
             {p.map((x) => (
               <tr key={x.id}>
-                <td className="font-medium">{x.name}</td>
-                <td>{x.description}</td>
+                <td className="font-medium">
+                  {editingId === x.id ? (
+                    <input
+                      aria-label="Project name"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                  ) : (
+                    x.name
+                  )}
+                </td>
+                <td>
+                  {editingId === x.id ? (
+                    <input
+                      aria-label="Project description"
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                    />
+                  ) : (
+                    x.description || "—"
+                  )}
+                </td>
                 <td>{x.isActive ? "Active" : "Inactive"}</td>
-                <td className="space-x-3">
-                  <button className="text-blue-600" onClick={() => toggle(x)}>
-                    {x.isActive ? "Deactivate" : "Activate"}
-                  </button>
-                  <button className="text-red-600" onClick={() => remove(x)}>
-                    Delete
-                  </button>
+                <td>
+                  {editingId === x.id ? (
+                    <div className="flex gap-3">
+                      <button
+                        className="font-medium text-blue-600"
+                        disabled={!editName.trim() || savingId === x.id}
+                        onClick={() => saveEdit(x)}
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="text-slate-500"
+                        disabled={savingId === x.id}
+                        onClick={cancelEdit}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        className="font-medium text-blue-600"
+                        onClick={() => beginEdit(x)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="text-blue-600"
+                        disabled={savingId === x.id}
+                        onClick={() => toggle(x)}
+                      >
+                        {x.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button className="text-red-600" onClick={() => remove(x)}>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}

@@ -4,16 +4,12 @@ import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
 import { ErrorBox, Loading } from "../../components/common/States";
 import type { Project } from "../../types";
-const iso = (d: Date) => d.toISOString().slice(0, 10);
-const monday = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-  return iso(d);
-};
+import { addDateDays, currentWeekStart } from "../../utils/dates";
+const weekStart = currentWeekStart();
 const blank = {
   projectId: "",
-  weekStartDate: monday(),
-  weekEndDate: iso(new Date(new Date(monday()).getTime() + 4 * 864e5)),
+  weekStartDate: weekStart,
+  weekEndDate: addDateDays(weekStart, 4),
   notes: "",
   links: [""],
   tasks: [
@@ -43,12 +39,20 @@ export function ReportForm() {
     [err, setErr] = useState(""),
     [validationErrors, setValidationErrors] = useState<string[]>([]);
   useEffect(() => {
-    api.get("/projects").then((r) => setProjects(r.data));
+    api
+      .get("/projects")
+      .then((r) => setProjects(r.data))
+      .catch((error) => setErr(errorMessage(error)));
     if (id)
       api
         .get(`/reports/${id}`)
         .then((r) => {
           const d = r.data;
+          if (!["DRAFT", "NEEDS_CORRECTION"].includes(d.status)) {
+            toast.error("This report is read-only in its current status.");
+            nav(`/reports/${id}`, { replace: true });
+            return;
+          }
           setData({
             ...d,
             weekStartDate: d.weekStartDate.slice(0, 10),
@@ -58,7 +62,7 @@ export function ReportForm() {
         })
         .catch((e) => setErr(errorMessage(e)))
         .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, nav]);
   const set = (k: string, v: any) => setData((d: any) => ({ ...d, [k]: v }));
   const row = (section: string, i: number, k: string, v: any) =>
     set(

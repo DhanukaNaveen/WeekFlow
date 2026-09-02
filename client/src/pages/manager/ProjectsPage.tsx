@@ -29,7 +29,7 @@ export function ProjectsPage() {
       await api.post("/projects", { name, description });
       setName("");
       setDescription("");
-      load();
+      await load();
       toast.success("Project created");
     } catch (e) {
       toast.error(errorMessage(e));

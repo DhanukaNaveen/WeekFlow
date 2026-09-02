@@ -1,5 +1,9 @@
 import type { Request, Response } from "express";
-import { reportSchema } from "../validators/schemas.js";
+import {
+  correctionSchema,
+  reportQuerySchema,
+  reportSchema,
+} from "../validators/schemas.js";
 import * as reports from "../services/report.service.js";
 export const create = async (req: Request, res: Response) =>
   res
@@ -22,13 +26,13 @@ export const get = async (req: Request, res: Response) =>
   res.json(await reports.getReport(req.user!, String(req.params.id)));
 export const list = async (req: Request, res: Response) =>
   res.json(
-    await reports.listReports(req.user!, req.query as Record<string, string>),
+    await reports.listReports(req.user!, reportQuerySchema.parse(req.query)),
   );
 export const mine = async (req: Request, res: Response) =>
   res.json(
     await reports.listReports(
       req.user!,
-      req.query as Record<string, string>,
+      reportQuerySchema.parse(req.query),
       true,
     ),
   );
@@ -49,6 +53,12 @@ export const changes = async (req: Request, res: Response) =>
       req.user!.userId,
       String(req.params.id),
       "CHANGES_REQUESTED",
-      req.body.comment,
+      correctionSchema.parse(req.body).comment,
     ),
+  );
+export const reviews = async (req: Request, res: Response) =>
+  res.json((await reports.getReport(req.user!, String(req.params.id))).reviews);
+export const versions = async (req: Request, res: Response) =>
+  res.json(
+    (await reports.getReport(req.user!, String(req.params.id))).versions,
   );

@@ -1,4 +1,139 @@
-import{useState,type FormEvent}from'react';import{Link,useNavigate}from'react-router-dom';import toast from'react-hot-toast';import{useAuth}from'../../contexts/AuthContext';import{errorMessage}from'../../api/client';
-function Shell({children,title,sub}:{children:React.ReactNode;title:string;sub:string}){return <div className="flex min-h-screen items-center justify-center bg-navy p-4"><div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl"><h1 className="mb-2 text-center text-3xl font-bold">Week<span className="text-blue-600">Flow</span></h1><h2 className="mt-6 text-xl font-semibold">{title}</h2><p className="mb-6 text-sm text-slate-500">{sub}</p>{children}</div></div>}
-export function Login(){const{login}=useAuth(),nav=useNavigate();const[e,setE]=useState('manager@example.com'),[p,setP]=useState('Password123!'),[busy,setBusy]=useState(false);async function go(x:FormEvent){x.preventDefault();setBusy(true);try{await login(e,p);nav('/')}catch(err){toast.error(errorMessage(err))}finally{setBusy(false)}}return <Shell title="Welcome back" sub="Sign in to manage your weekly work."><form onSubmit={go} className="space-y-4"><label>Email<input type="email" value={e} onChange={x=>setE(x.target.value)} required/></label><label>Password<input type="password" value={p} onChange={x=>setP(x.target.value)} required/></label><button disabled={busy} className="btn-primary w-full">{busy?'Signing in…':'Sign in'}</button></form><p className="mt-5 text-center text-sm">New here? <Link className="text-blue-600" to="/register">Create account</Link></p></Shell>}
-export function Register(){const{register}=useAuth(),nav=useNavigate();const[n,setN]=useState(''),[e,setE]=useState(''),[p,setP]=useState(''),[busy,setBusy]=useState(false);async function go(x:FormEvent){x.preventDefault();setBusy(true);try{await register(n,e,p);nav('/')}catch(err){toast.error(errorMessage(err))}finally{setBusy(false)}}return <Shell title="Create your account" sub="Join your team’s weekly reporting workspace."><form onSubmit={go} className="space-y-4"><label>Name<input value={n} onChange={x=>setN(x.target.value)} required/></label><label>Email<input type="email" value={e} onChange={x=>setE(x.target.value)} required/></label><label>Password<input type="password" minLength={8} value={p} onChange={x=>setP(x.target.value)} required/></label><button disabled={busy} className="btn-primary w-full">Register</button></form><p className="mt-5 text-center text-sm"><Link className="text-blue-600" to="/login">Back to sign in</Link></p></Shell>}
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useAuth } from "../../contexts/AuthContext";
+import { errorMessage } from "../../api/client";
+function Shell({
+  children,
+  title,
+  sub,
+}: {
+  children: React.ReactNode;
+  title: string;
+  sub: string;
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-navy p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
+        <h1 className="mb-2 text-center text-3xl font-bold">
+          Week<span className="text-blue-600">Flow</span>
+        </h1>
+        <h2 className="mt-6 text-xl font-semibold">{title}</h2>
+        <p className="mb-6 text-sm text-slate-500">{sub}</p>
+        {children}
+      </div>
+    </div>
+  );
+}
+export function Login() {
+  const { login } = useAuth(),
+    nav = useNavigate();
+  const [e, setE] = useState("manager@example.com"),
+    [p, setP] = useState("Password123!"),
+    [busy, setBusy] = useState(false);
+  async function go(x: FormEvent) {
+    x.preventDefault();
+    setBusy(true);
+    try {
+      await login(e, p);
+      nav("/");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Shell title="Welcome back" sub="Sign in to manage your weekly work.">
+      <form onSubmit={go} className="space-y-4">
+        <label>
+          Email
+          <input
+            type="email"
+            value={e}
+            onChange={(x) => setE(x.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            value={p}
+            onChange={(x) => setP(x.target.value)}
+            required
+          />
+        </label>
+        <button disabled={busy} className="btn-primary w-full">
+          {busy ? "Signing in…" : "Sign in"}
+        </button>
+      </form>
+      <p className="mt-5 text-center text-sm">
+        New here?{" "}
+        <Link className="text-blue-600" to="/register">
+          Create account
+        </Link>
+      </p>
+    </Shell>
+  );
+}
+export function Register() {
+  const { register } = useAuth(),
+    nav = useNavigate();
+  const [n, setN] = useState(""),
+    [e, setE] = useState(""),
+    [p, setP] = useState(""),
+    [busy, setBusy] = useState(false);
+  async function go(x: FormEvent) {
+    x.preventDefault();
+    setBusy(true);
+    try {
+      await register(n, e, p);
+      nav("/");
+    } catch (err) {
+      toast.error(errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Shell
+      title="Create your account"
+      sub="Join your team’s weekly reporting workspace."
+    >
+      <form onSubmit={go} className="space-y-4">
+        <label>
+          Name
+          <input value={n} onChange={(x) => setN(x.target.value)} required />
+        </label>
+        <label>
+          Email
+          <input
+            type="email"
+            value={e}
+            onChange={(x) => setE(x.target.value)}
+            required
+          />
+        </label>
+        <label>
+          Password
+          <input
+            type="password"
+            minLength={8}
+            value={p}
+            onChange={(x) => setP(x.target.value)}
+            required
+          />
+        </label>
+        <button disabled={busy} className="btn-primary w-full">
+          Register
+        </button>
+      </form>
+      <p className="mt-5 text-center text-sm">
+        <Link className="text-blue-600" to="/login">
+          Back to sign in
+        </Link>
+      </p>
+    </Shell>
+  );
+}

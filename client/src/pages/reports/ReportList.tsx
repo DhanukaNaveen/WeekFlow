@@ -5,6 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import type { Project, Report, User } from "../../types";
+import { formatDateOnly } from "../../utils/dates";
 export function ReportList() {
   const { user } = useAuth(),
     manager = user?.role !== "TEAM_MEMBER";
@@ -46,8 +47,15 @@ export function ReportList() {
     setFilters((current) => ({ ...current, [name]: value }));
   }
   useEffect(() => {
-    api.get("/projects").then((r) => setProjects(r.data));
-    if (manager) api.get("/users").then((r) => setUsers(r.data));
+    api
+      .get("/projects")
+      .then((r) => setProjects(r.data))
+      .catch((error) => setErr(errorMessage(error)));
+    if (manager)
+      api
+        .get("/users")
+        .then((r) => setUsers(r.data))
+        .catch((error) => setErr(errorMessage(error)));
   }, [manager]);
   useEffect(() => {
     void load();
@@ -75,7 +83,13 @@ export function ReportList() {
           onChange={(e) => changeFilter("status", e.target.value)}
         >
           <option value="">All statuses</option>
-          {["DRAFT", "SUBMITTED", "NEEDS_CORRECTION", "APPROVED", ...(manager ? ["NOT_STARTED"] : [])].map((x) => (
+          {[
+            "DRAFT",
+            "SUBMITTED",
+            "NEEDS_CORRECTION",
+            "APPROVED",
+            ...(manager ? ["NOT_STARTED"] : []),
+          ].map((x) => (
             <option key={x}>{x}</option>
           ))}
         </select>
@@ -128,51 +142,59 @@ export function ReportList() {
         <>
           <div className="table-wrap">
             <table>
-            <thead>
-              <tr>
-                {manager && <th>Member</th>}
-                <th>Week</th>
-                <th>Project</th>
-                <th>Updated</th>
-                <th>Status</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((r) => (
-                <tr key={r.id}>
-                  {manager && <td>{r.user.name}</td>}
-                  <td>
-                    {r.weekStartDate.slice(0, 10)} –{" "}
-                    {r.weekEndDate.slice(0, 10)}
-                  </td>
-                  <td>{r.project.name}</td>
-                  <td>{new Date(r.updatedAt).toLocaleDateString()}</td>
-                  <td>
-                    <StatusBadge status={r.status} />
-                  </td>
-                  <td>
-                    {r.status !== "NOT_STARTED" && <Link
-                      className="font-medium text-blue-600"
-                      to={
-                        manager && r.status === "SUBMITTED"
-                          ? `/reports/${r.id}/review`
-                          : `/reports/${r.id}`
-                      }
-                    >
-                      {manager && r.status === "SUBMITTED" ? "Review" : "View"}
-                    </Link>}
-                  </td>
+              <thead>
+                <tr>
+                  {manager && <th>Member</th>}
+                  <th>Week</th>
+                  <th>Project</th>
+                  <th>Submitted</th>
+                  <th>Updated</th>
+                  <th>Status</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
+              </thead>
+              <tbody>
+                {items.map((r) => (
+                  <tr key={r.id}>
+                    {manager && <td>{r.user.name}</td>}
+                    <td>
+                      {r.weekStartDate.slice(0, 10)} –{" "}
+                      {r.weekEndDate.slice(0, 10)}
+                    </td>
+                    <td>{r.project.name}</td>
+                    <td>
+                      {r.submittedAt ? formatDateOnly(r.submittedAt) : "—"}
+                    </td>
+                    <td>{formatDateOnly(r.updatedAt)}</td>
+                    <td>
+                      <StatusBadge status={r.status} />
+                    </td>
+                    <td>
+                      {r.status !== "NOT_STARTED" && (
+                        <Link
+                          className="font-medium text-blue-600"
+                          to={
+                            manager && r.status === "SUBMITTED"
+                              ? `/reports/${r.id}/review`
+                              : `/reports/${r.id}`
+                          }
+                        >
+                          {manager && r.status === "SUBMITTED"
+                            ? "Review"
+                            : "View"}
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-500">
               Showing {(pagination.page - 1) * pagination.limit + 1}–
-              {Math.min(pagination.page * pagination.limit, pagination.total)} of{" "}
-              {pagination.total} reports
+              {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
+              of {pagination.total} reports
             </p>
             <div className="flex items-center gap-3">
               <button

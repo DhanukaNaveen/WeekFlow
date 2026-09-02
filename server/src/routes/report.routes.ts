@@ -6,6 +6,8 @@ export const reportRouter = Router();
 reportRouter.post("/", authorizeRoles("TEAM_MEMBER"), asyncHandler(c.create));
 reportRouter.get("/my", authorizeRoles("TEAM_MEMBER"), asyncHandler(c.mine));
 reportRouter.get("/", authorizeRoles("MANAGER", "ADMIN"), asyncHandler(c.list));
+reportRouter.get("/:id/reviews", asyncHandler(c.reviews));
+reportRouter.get("/:id/versions", asyncHandler(c.versions));
 reportRouter.get("/:id", asyncHandler(c.get));
 reportRouter.patch(
   "/:id",
@@ -27,15 +29,3 @@ reportRouter.post(
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(c.changes),
 );
-reportRouter.get(
-  "/:id/reviews",
-  asyncHandler(async (req, res) => res.json((await cGet(req)).reviews)),
-);
-reportRouter.get(
-  "/:id/versions",
-  asyncHandler(async (req, res) => res.json((await cGet(req)).versions)),
-);
-const cGet = (req: any) =>
-  import("../services/report.service.js").then((m) =>
-    m.getReport(req.user, String(req.params.id)),
-  );

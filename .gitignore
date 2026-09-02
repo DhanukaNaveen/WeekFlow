@@ -3,5 +3,8 @@ dist/
 .env
 *.log
 coverage/
+*.tsbuildinfo
+client/vite.config.js
+client/vite.config.d.ts
 server/prisma/test.db
 server/prisma/dev.db

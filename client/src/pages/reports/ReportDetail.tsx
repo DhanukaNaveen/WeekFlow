@@ -6,13 +6,15 @@ import { ReportSummary } from "../../components/reports/ReportSummary";
 import { ErrorBox, Loading } from "../../components/common/States";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Report } from "../../types";
+import { formatTimestamp } from "../../utils/dates";
 export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   const { id } = useParams(),
     { user } = useAuth();
   const [r, setR] = useState<Report>(),
     [err, setErr] = useState(""),
     [comment, setComment] = useState(""),
-    [selected, setSelected] = useState<any>();
+    [selected, setSelected] = useState<any>(),
+    [reviewing, setReviewing] = useState(false);
   useEffect(() => {
     api
       .get(`/reports/${id}`)
@@ -20,6 +22,8 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
       .catch((error) => setErr(errorMessage(error)));
   }, [id]);
   async function action(kind: "approve" | "request-changes") {
+    if (reviewing) return;
+    setReviewing(true);
     try {
       const x = await api.post(`/reports/${id}/${kind}`, { comment });
       setR(x.data);
@@ -28,6 +32,8 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
       );
     } catch (e) {
       toast.error(errorMessage(e));
+    } finally {
+      setReviewing(false);
     }
   }
   if (err) return <ErrorBox message={err} />;
@@ -55,6 +61,12 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
           <b>Manager feedback:</b> {r.reviews[0]?.comment}
         </div>
       )}
+      {selected && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          Viewing immutable submitted version {selected.versionNumber} from{" "}
+          {formatTimestamp(selected.submittedAt)}.
+        </div>
+      )}
       <ReportSummary report={r} version={selected} />
       {reviewMode && r.status === "SUBMITTED" && (
         <div className="card">
@@ -69,12 +81,14 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
           <div className="mt-3 flex gap-3">
             <button
               className="btn-primary bg-emerald-600 hover:bg-emerald-700"
+              disabled={reviewing}
               onClick={() => action("approve")}
             >
               Approve
             </button>
             <button
               className="btn-primary bg-amber-600 hover:bg-amber-700"
+              disabled={reviewing || !comment.trim()}
               onClick={() => action("request-changes")}
             >
               Request changes
@@ -91,15 +105,18 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
           >
             Current content
           </button>
+          {!r.versions.length && (
+            <p className="text-sm text-slate-400">No submitted versions yet.</p>
+          )}
           {r.versions.map((v) => (
             <button
               key={v.id}
               onClick={() => setSelected(v)}
-              className="mb-2 block w-full rounded-lg bg-slate-50 p-3 text-left text-sm hover:bg-blue-50"
+              className={`mb-2 block w-full rounded-lg p-3 text-left text-sm ${selected?.id === v.id ? "bg-blue-100 ring-2 ring-blue-300" : "bg-slate-50 hover:bg-blue-50"}`}
             >
               <b>Version {v.versionNumber}</b>
               <span className="float-right text-slate-500">
-                {new Date(v.submittedAt).toLocaleString()}
+                {formatTimestamp(v.submittedAt)}
               </span>
             </button>
           ))}
@@ -120,7 +137,7 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
                 <p>{x.comment || "No comment"}</p>
                 <p className="text-xs text-slate-400">
                   Version {x.version.versionNumber} ·{" "}
-                  {new Date(x.createdAt).toLocaleString()}
+                  {formatTimestamp(x.createdAt)}
                 </p>
               </div>
             ))

@@ -19,7 +19,6 @@ export async function askManagerAssistant(question: string) {
       weekStartDate: true,
       weekEndDate: true,
       status: true,
-      notes: true,
       user: { select: { name: true } },
       project: { select: { name: true } },
       tasks: {
@@ -53,7 +52,6 @@ export async function askManagerAssistant(question: string) {
     weekStart: report.weekStartDate.toISOString().slice(0, 10),
     weekEnd: report.weekEndDate.toISOString().slice(0, 10),
     status: report.status,
-    notes: report.notes?.slice(0, 500),
     tasks: report.tasks,
     blockers: report.blockers,
     achievements: report.achievements,
@@ -75,7 +73,7 @@ export async function askManagerAssistant(question: string) {
             role: "user",
             parts: [
               {
-                text: `Manager question: ${question}\n\nWeekly report context:\n${JSON.stringify(context)}`,
+                text: `Current UTC date: ${new Date().toISOString().slice(0, 10)}\nManager question: ${question}\n\nWeekly report context:\n${JSON.stringify(context)}`,
               },
             ],
           },

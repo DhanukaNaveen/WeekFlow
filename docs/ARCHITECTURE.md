@@ -10,7 +10,7 @@ Pages own presentation/loading state. The auth context owns the session; the Axi
 
 ## Authentication and authorization
 
-Login compares a bcrypt hash and signs an eight-hour JWT containing `userId` and `role`. `authenticate` validates the signature. `authorizeRoles` handles coarse permissions, while `report.service.ts` handles object-level member ownership. Deactivated accounts cannot sign in. Admin self-role change and self-deactivation are blocked.
+Login compares a bcrypt hash and signs an eight-hour JWT containing `userId` and `role`. `authenticate` validates the signature and reloads the current role/active state from PostgreSQL on every protected request, so deactivation and role changes take effect immediately. `authorizeRoles` handles coarse permissions, while `report.service.ts` handles object-level member ownership. Admin self-role change and self-deactivation are blocked.
 
 ## Report workflow and versioning
 

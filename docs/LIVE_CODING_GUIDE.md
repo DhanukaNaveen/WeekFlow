@@ -6,6 +6,7 @@
 - Report ownership, writes, workflow, snapshots and reviews: `server/src/services/report.service.ts`.
 - Models/relations: `server/prisma/schema.prisma`; validation: `server/src/validators/schemas.ts`.
 - Analytics: `server/src/services/dashboard.service.ts`.
+- AI context, privacy filtering, and Gemini request: `server/src/services/ai.service.ts`.
 - HTTP wiring: `server/src/routes`; HTTP parsing: `server/src/controllers`.
 - Frontend API/token behavior: `client/src/api/client.ts`; session: `client/src/contexts/AuthContext.tsx`.
 - Form: `client/src/pages/reports/ReportForm.tsx`; shared read-only view: `client/src/components/reports/ReportSummary.tsx`.

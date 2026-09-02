@@ -15,7 +15,7 @@ WeekFlow is a production-oriented full-stack application for creating structured
 
 ## Stack and architecture
 
-React 19, TypeScript, Vite, Tailwind CSS, React Router, Axios, Recharts, React Hot Toast; Node.js, Express 5, TypeScript, Zod, JWT, bcrypt; PostgreSQL and Prisma ORM; Vitest and Supertest. See [architecture](docs/ARCHITECTURE.md), [API](docs/API.md), and [ER diagram](docs/ER_DIAGRAM.md).
+React 19, TypeScript, Vite, Tailwind CSS, React Router, Axios, Recharts, React Hot Toast; Node.js, Express 5, TypeScript, Zod, JWT, bcrypt; PostgreSQL and Prisma ORM; Vitest and Supertest. See [architecture](docs/ARCHITECTURE.md), [API](docs/API.md), [ER diagram](docs/ER_DIAGRAM.md), and the [requirements checklist](docs/REQUIREMENTS_CHECKLIST.md).
 
 ```text
 client/src  → pages, reusable components, auth context, Axios client
@@ -51,6 +51,14 @@ npm run dev
 
 Open `http://localhost:5173`. Update `DATABASE_URL` and use a long random `JWT_SECRET` in `server/.env`. The backend defaults to port 5000; `VITE_API_URL` defaults to `http://localhost:5000/api`.
 
+For an existing hosted database such as Neon, apply committed migrations with:
+
+```bash
+cd server
+npx prisma migrate deploy
+npx prisma db seed
+```
+
 ## Verification commands
 
 ```bash
@@ -63,6 +71,19 @@ cd ../client
 npm run build
 ```
 
+## Environment variables
+
+| Variable | Required | Purpose |
+|---|---:|---|
+| `DATABASE_URL` | Yes | PostgreSQL connection string used by Prisma |
+| `DIRECT_URL` | Hosted DBs | Direct PostgreSQL connection for migrations; Neon direct host omits `-pooler` |
+| `JWT_SECRET` | Yes | Long random secret used to sign authentication tokens |
+| `PORT` | No | Express port; defaults to `5000` |
+| `CLIENT_URL` | No | Allowed browser origin; defaults to `http://localhost:5173` |
+| `GEMINI_API_KEY` | No | Enables the manager AI assistant |
+| `GEMINI_MODEL` | No | Gemini model; defaults to `gemini-3.1-flash-lite` |
+| `VITE_API_URL` | Yes | Browser-visible REST API base URL |
+
 ## Demo accounts
 
 All seeded accounts use `Password123!` (development only): `admin@example.com`, `manager@example.com`, and `member1@example.com` through `member4@example.com`.
@@ -72,6 +93,17 @@ All seeded accounts use `Password123!` (development only): `admin@example.com`, 
 The bearer JWT contains only `userId` and `role`. `authenticate` verifies it; `authorizeRoles` gates role-only endpoints. Report services additionally enforce object ownership, so changing an ID cannot expose another member's report. Managers can alter only review state/comments and never report content.
 
 Every submit/resubmit transaction writes an immutable JSON snapshot with the next version number and changes the status to `SUBMITTED`. Every review transaction creates a review linked to that exact version, changes status, and writes an activity entry. Requesting changes requires a comment.
+
+## AI assistant setup and privacy
+
+The AI Manager Assistant is optional and never affects core reporting. Create a Gemini API key in Google AI Studio and configure the server only:
+
+```env
+GEMINI_API_KEY="your-key"
+GEMINI_MODEL="gemini-3.1-flash-lite"
+```
+
+The server retrieves recent non-draft reports, removes emails, passwords, links, and database identifiers, and sends only the work context needed to answer the manager's question. The system prompt treats report content as untrusted data, requires answers grounded in the supplied context, and uses a low temperature for stable summaries. The key is never exposed to the React application. Free-tier Gemini data handling may differ from paid-tier handling, so production deployments should review Google's current terms and privacy controls.
 
 ## Screenshots
 

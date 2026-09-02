@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   findMany: vi.fn(),
   count: vi.fn(),
   transaction: vi.fn(),
+  userFindUnique: vi.fn(),
 }));
 const askAi = vi.hoisted(() => vi.fn());
 vi.mock("../src/config/prisma.js", () => ({
@@ -15,6 +16,7 @@ vi.mock("../src/config/prisma.js", () => ({
       findMany: mocks.findMany,
       count: mocks.count,
     },
+    user: { findUnique: mocks.userFindUnique },
     $transaction: mocks.transaction,
   },
 }));
@@ -26,9 +28,29 @@ const secret = "test-secret-that-is-long-enough";
 const token = (userId: string, role: string) =>
   jwt.sign({ userId, role }, secret);
 describe("API authorization", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.userFindUnique.mockImplementation(
+      ({ where }: { where: { id: string } }) => ({
+        id: where.id,
+        role: where.id.includes("manager") ? "MANAGER" : "TEAM_MEMBER",
+        isActive: true,
+      }),
+    );
+  });
   it("rejects unauthenticated protected requests", async () => {
     expect((await request(app).get("/api/reports/my")).status).toBe(401);
+  });
+  it("rejects an existing token after its account is deactivated", async () => {
+    mocks.userFindUnique.mockResolvedValueOnce({
+      id: "member-a",
+      role: "TEAM_MEMBER",
+      isActive: false,
+    });
+    const response = await request(app)
+      .get("/api/reports/my")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
+    expect(response.status).toBe(401);
   });
   it("prevents a member from accessing another member report", async () => {
     mocks.findUnique.mockResolvedValue({ id: "report-b", userId: "member-b" });
@@ -54,6 +76,25 @@ describe("API authorization", () => {
       .get("/api/reports")
       .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
     expect(r.status).toBe(403);
+  });
+  it("uses the current database role instead of a stale JWT role", async () => {
+    const response = await request(app)
+      .get("/api/reports")
+      .set("Authorization", `Bearer ${token("member-a", "MANAGER")}`);
+    expect(response.status).toBe(403);
+  });
+  it("rejects invalid report filters", async () => {
+    const response = await request(app)
+      .get("/api/reports?status=INVALID")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
+    expect(response.status).toBe(400);
+  });
+  it("requires a correction comment", async () => {
+    const response = await request(app)
+      .post("/api/reports/report-b/request-changes")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`)
+      .send({ comment: "" });
+    expect(response.status).toBe(400);
   });
   it("rejects an invalid submission status transition", async () => {
     mocks.findUnique.mockResolvedValue({

@@ -1,1 +1,22 @@
-import axios from 'axios';export const api=axios.create({baseURL:import.meta.env.VITE_API_URL||'http://localhost:5000/api'});api.interceptors.request.use(c=>{const token=localStorage.getItem('weekflow_token');if(token)c.headers.Authorization=`Bearer ${token}`;return c});api.interceptors.response.use(r=>r,e=>{if(e.response?.status===401){localStorage.removeItem('weekflow_token');localStorage.removeItem('weekflow_user');if(!location.pathname.startsWith('/login'))location.href='/login'}return Promise.reject(e)});export const errorMessage=(e:any)=>e.response?.data?.message||e.message||'Something went wrong';
+import axios from "axios";
+export const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+});
+api.interceptors.request.use((c) => {
+  const token = localStorage.getItem("weekflow_token");
+  if (token) c.headers.Authorization = `Bearer ${token}`;
+  return c;
+});
+api.interceptors.response.use(
+  (r) => r,
+  (e) => {
+    if (e.response?.status === 401) {
+      localStorage.removeItem("weekflow_token");
+      localStorage.removeItem("weekflow_user");
+      if (!location.pathname.startsWith("/login")) location.href = "/login";
+    }
+    return Promise.reject(e);
+  },
+);
+export const errorMessage = (e: any) =>
+  e.response?.data?.message || e.message || "Something went wrong";

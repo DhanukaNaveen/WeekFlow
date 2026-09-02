@@ -1,6 +1,11 @@
 import { prisma } from "../config/prisma.js";
 
 export async function memberDashboard(userId: string) {
+  const monday = new Date();
+  monday.setUTCHours(0, 0, 0, 0);
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
   const reports = await prisma.report.findMany({
     where: { userId },
     include: {
@@ -8,11 +13,14 @@ export async function memberDashboard(userId: string) {
       reviews: { orderBy: { createdAt: "desc" }, take: 1 },
     },
     orderBy: { weekStartDate: "desc" },
-    take: 8,
   });
   return {
-    current: reports[0] ?? null,
-    recent: reports,
+    current:
+      reports.find(
+        (report) =>
+          report.weekStartDate >= monday && report.weekStartDate <= sunday,
+      ) ?? null,
+    recent: reports.slice(0, 8),
     summary: {
       total: reports.length,
       approved: reports.filter((r) => r.status === "APPROVED").length,
@@ -25,6 +33,8 @@ export async function managerDashboard() {
   const monday = new Date();
   monday.setUTCHours(0, 0, 0, 0);
   monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
+  const sunday = new Date(monday);
+  sunday.setUTCDate(sunday.getUTCDate() + 6);
   const [reports, members, activity] = await Promise.all([
     prisma.report.findMany({
       include: {
@@ -41,7 +51,9 @@ export async function managerDashboard() {
     }),
     prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
   ]);
-  const weekly = reports.filter((r) => r.weekStartDate >= monday),
+  const weekly = reports.filter(
+      (r) => r.weekStartDate >= monday && r.weekStartDate <= sunday,
+    ),
     createdUsers = new Set(
       weekly.filter((r) => r.status !== "DRAFT").map((r) => r.userId),
     );
@@ -90,6 +102,10 @@ export async function managerDashboard() {
     statusByMember,
     workloadByProject: [...byProject].map(([name, value]) => ({ name, value })),
     timeByWorkType: [...byType].map(([name, value]) => ({ name, value })),
+    submissionOverview: [
+      { name: "Submitted", value: createdUsers.size },
+      { name: "Not submitted", value: members.length - createdUsers.size },
+    ],
     recentActivity: activity,
   };
 }

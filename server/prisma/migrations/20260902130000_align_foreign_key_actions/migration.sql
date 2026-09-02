@@ -1,0 +1,23 @@
+ALTER TABLE "Achievement" DROP CONSTRAINT "Achievement_reportId_fkey";
+ALTER TABLE "Blocker" DROP CONSTRAINT "Blocker_reportId_fkey";
+ALTER TABLE "NextWeekTask" DROP CONSTRAINT "NextWeekTask_reportId_fkey";
+ALTER TABLE "Report" DROP CONSTRAINT "Report_projectId_fkey";
+ALTER TABLE "Report" DROP CONSTRAINT "Report_userId_fkey";
+ALTER TABLE "ReportTask" DROP CONSTRAINT "ReportTask_reportId_fkey";
+ALTER TABLE "ReportVersion" DROP CONSTRAINT "ReportVersion_reportId_fkey";
+ALTER TABLE "Review" DROP CONSTRAINT "Review_reportId_fkey";
+ALTER TABLE "Review" DROP CONSTRAINT "Review_reviewerId_fkey";
+ALTER TABLE "Review" DROP CONSTRAINT "Review_versionId_fkey";
+ALTER TABLE "WorkHour" DROP CONSTRAINT "WorkHour_reportId_fkey";
+
+ALTER TABLE "Report" ADD CONSTRAINT "Report_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Report" ADD CONSTRAINT "Report_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ReportTask" ADD CONSTRAINT "ReportTask_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "NextWeekTask" ADD CONSTRAINT "NextWeekTask_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Blocker" ADD CONSTRAINT "Blocker_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Achievement" ADD CONSTRAINT "Achievement_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "WorkHour" ADD CONSTRAINT "WorkHour_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "ReportVersion" ADD CONSTRAINT "ReportVersion_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_reportId_fkey" FOREIGN KEY ("reportId") REFERENCES "Report"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_reviewerId_fkey" FOREIGN KEY ("reviewerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_versionId_fkey" FOREIGN KEY ("versionId") REFERENCES "ReportVersion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

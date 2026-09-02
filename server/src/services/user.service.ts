@@ -23,8 +23,14 @@ export async function getUserProfile(id: string) {
       reports: {
         include: {
           project: true,
-          _count: { select: { tasks: true, blockers: true } },
+          _count: {
+            select: { tasks: { where: { status: "COMPLETED" } } },
+          },
           blockers: true,
+          reviews: {
+            where: { action: "CHANGES_REQUESTED" },
+            select: { id: true },
+          },
         },
         orderBy: { weekStartDate: "desc" },
       },
@@ -38,9 +44,10 @@ export async function getUserProfile(id: string) {
     statistics: {
       total: reports.length,
       approved: reports.filter((report) => report.status === "APPROVED").length,
-      corrections: reports.filter(
-        (report) => report.status === "NEEDS_CORRECTION",
-      ).length,
+      corrections: reports.reduce(
+        (total, report) => total + report.reviews.length,
+        0,
+      ),
       averageCompletedTasks: reports.length
         ? reports.reduce((total, report) => total + report._count.tasks, 0) /
           reports.length

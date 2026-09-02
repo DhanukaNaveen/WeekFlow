@@ -23,7 +23,7 @@ export function UserManagement() {
   async function role(x: User, r: Role) {
     try {
       await api.patch(`/users/${x.id}/role`, { role: r });
-      load();
+      await load();
       toast.success("Role updated");
     } catch (e) {
       toast.error(errorMessage(e));

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
-import { Loading } from "../../components/common/States";
+import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import type { Project } from "../../types";
 export function ProjectsPage() {
   const [p, setP] = useState<Project[]>(),
@@ -10,9 +10,20 @@ export function ProjectsPage() {
     [editingId, setEditingId] = useState<string | null>(null),
     [editName, setEditName] = useState(""),
     [editDescription, setEditDescription] = useState(""),
-    [savingId, setSavingId] = useState<string | null>(null);
-  const load = () => api.get("/projects").then((r) => setP(r.data));
-  useEffect(() => { void load(); }, []);
+    [savingId, setSavingId] = useState<string | null>(null),
+    [err, setErr] = useState("");
+  const load = async () => {
+    try {
+      const response = await api.get("/projects");
+      setP(response.data);
+      setErr("");
+    } catch (error) {
+      setErr(errorMessage(error));
+    }
+  };
+  useEffect(() => {
+    void load();
+  }, []);
   async function add() {
     try {
       await api.post("/projects", { name, description });
@@ -65,9 +76,18 @@ export function ProjectsPage() {
   }
   async function remove(x: Project) {
     if (!confirm(`Delete or deactivate ${x.name}?`)) return;
-    await api.delete(`/projects/${x.id}`);
-    load();
+    try {
+      setSavingId(x.id);
+      await api.delete(`/projects/${x.id}`);
+      await load();
+      toast.success("Project removed or safely deactivated");
+    } catch (error) {
+      toast.error(errorMessage(error));
+    } finally {
+      setSavingId(null);
+    }
   }
+  if (err) return <ErrorBox message={err} />;
   if (!p) return <Loading />;
   return (
     <div className="space-y-5">
@@ -90,86 +110,93 @@ export function ProjectsPage() {
           Add project
         </button>
       </div>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Description</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {p.map((x) => (
-              <tr key={x.id}>
-                <td className="font-medium">
-                  {editingId === x.id ? (
-                    <input
-                      aria-label="Project name"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                    />
-                  ) : (
-                    x.name
-                  )}
-                </td>
-                <td>
-                  {editingId === x.id ? (
-                    <input
-                      aria-label="Project description"
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                    />
-                  ) : (
-                    x.description || "—"
-                  )}
-                </td>
-                <td>{x.isActive ? "Active" : "Inactive"}</td>
-                <td>
-                  {editingId === x.id ? (
-                    <div className="flex gap-3">
-                      <button
-                        className="font-medium text-blue-600"
-                        disabled={!editName.trim() || savingId === x.id}
-                        onClick={() => saveEdit(x)}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="text-slate-500"
-                        disabled={savingId === x.id}
-                        onClick={cancelEdit}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-3">
-                      <button
-                        className="font-medium text-blue-600"
-                        onClick={() => beginEdit(x)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="text-blue-600"
-                        disabled={savingId === x.id}
-                        onClick={() => toggle(x)}
-                      >
-                        {x.isActive ? "Deactivate" : "Activate"}
-                      </button>
-                      <button className="text-red-600" onClick={() => remove(x)}>
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </td>
+      {!p.length ? (
+        <Empty message="No projects have been created yet." />
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {p.map((x) => (
+                <tr key={x.id}>
+                  <td className="font-medium">
+                    {editingId === x.id ? (
+                      <input
+                        aria-label="Project name"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                      />
+                    ) : (
+                      x.name
+                    )}
+                  </td>
+                  <td>
+                    {editingId === x.id ? (
+                      <input
+                        aria-label="Project description"
+                        value={editDescription}
+                        onChange={(e) => setEditDescription(e.target.value)}
+                      />
+                    ) : (
+                      x.description || "—"
+                    )}
+                  </td>
+                  <td>{x.isActive ? "Active" : "Inactive"}</td>
+                  <td>
+                    {editingId === x.id ? (
+                      <div className="flex gap-3">
+                        <button
+                          className="font-medium text-blue-600"
+                          disabled={!editName.trim() || savingId === x.id}
+                          onClick={() => saveEdit(x)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="text-slate-500"
+                          disabled={savingId === x.id}
+                          onClick={cancelEdit}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          className="font-medium text-blue-600"
+                          onClick={() => beginEdit(x)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="text-blue-600"
+                          disabled={savingId === x.id}
+                          onClick={() => toggle(x)}
+                        >
+                          {x.isActive ? "Deactivate" : "Activate"}
+                        </button>
+                        <button
+                          className="text-red-600"
+                          onClick={() => remove(x)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

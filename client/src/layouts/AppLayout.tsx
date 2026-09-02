@@ -1,2 +1,99 @@
-import{NavLink,Outlet}from'react-router-dom';import{BarChart3,FilePlus2,Files,FolderKanban,LogOut,Users,UserCog,Menu,X,Columns3}from'lucide-react';import{useState}from'react';import{useAuth}from'../contexts/AuthContext';
-export function AppLayout(){const{user,logout}=useAuth();const[open,setOpen]=useState(false);const member=[['Dashboard','/',BarChart3],['Create Report','/reports/new',FilePlus2],['My Reports','/reports',Files]] as const;const manager=[['Dashboard','/',BarChart3],['Reports','/reports',Files],['Section View','/section-view',Columns3],['Team Members','/team',Users],['Projects','/projects',FolderKanban]] as const;const links=user?.role==='TEAM_MEMBER'?member:[...manager,...(user?.role==='ADMIN'?[['User Management','/admin/users',UserCog] as const]:[])];return <div className="min-h-screen lg:flex"><aside className={`fixed inset-y-0 z-30 w-64 bg-navy text-white transition lg:static ${open?'left-0':'-left-64 lg:left-0'}`}><div className="flex h-16 items-center justify-between border-b border-white/10 px-5"><span className="text-xl font-bold">Week<span className="text-blue-400">Flow</span></span><button className="lg:hidden" onClick={()=>setOpen(false)}><X/></button></div><nav className="space-y-1 p-3">{links.map(([label,to,Icon])=><NavLink key={to} to={to} end={to==='/'} onClick={()=>setOpen(false)} className={({isActive})=>`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${isActive?'bg-blue-600 text-white':'text-slate-300 hover:bg-white/10'}`}><Icon size={18}/>{label}</NavLink>)}</nav></aside><div className="min-w-0 flex-1"><header className="flex h-16 items-center justify-between border-b bg-white px-4 lg:px-8"><button className="lg:hidden" onClick={()=>setOpen(true)}><Menu/></button><div className="ml-auto flex items-center gap-4"><div className="text-right"><p className="text-sm font-semibold">{user?.name}</p><p className="text-xs text-slate-500">{user?.role.replace('_',' ')}</p></div><button title="Log out" onClick={logout} className="rounded-lg p-2 hover:bg-slate-100"><LogOut size={19}/></button></div></header><main className="p-4 lg:p-8"><Outlet/></main></div></div>}
+import { NavLink, Outlet } from "react-router-dom";
+import {
+  BarChart3,
+  FilePlus2,
+  Files,
+  FolderKanban,
+  LogOut,
+  Users,
+  UserCog,
+  Menu,
+  X,
+  Columns3,
+  Sparkles,
+} from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+export function AppLayout() {
+  const { user, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const member = [
+    ["Dashboard", "/", BarChart3],
+    ["Create Report", "/reports/new", FilePlus2],
+    ["My Reports", "/reports", Files],
+  ] as const;
+  const manager = [
+    ["Dashboard", "/", BarChart3],
+    ["Reports", "/reports", Files],
+    ["Section View", "/section-view", Columns3],
+    ["AI Assistant", "/ai-assistant", Sparkles],
+    ["Team Members", "/team", Users],
+    ["Projects", "/projects", FolderKanban],
+  ] as const;
+  const links =
+    user?.role === "TEAM_MEMBER"
+      ? member
+      : [
+          ...manager,
+          ...(user?.role === "ADMIN"
+            ? [["User Management", "/admin/users", UserCog] as const]
+            : []),
+        ];
+  return (
+    <div className="min-h-screen lg:flex">
+      <aside
+        className={`fixed inset-y-0 z-30 w-64 bg-navy text-white transition lg:static ${open ? "left-0" : "-left-64 lg:left-0"}`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
+          <span className="text-xl font-bold">
+            Week<span className="text-blue-400">Flow</span>
+          </span>
+          <button className="lg:hidden" onClick={() => setOpen(false)}>
+            <X />
+          </button>
+        </div>
+        <nav className="space-y-1 p-3">
+          {links.map(([label, to, Icon]) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/10"}`
+              }
+            >
+              <Icon size={18} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
+      <div className="min-w-0 flex-1">
+        <header className="flex h-16 items-center justify-between border-b bg-white px-4 lg:px-8">
+          <button className="lg:hidden" onClick={() => setOpen(true)}>
+            <Menu />
+          </button>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-semibold">{user?.name}</p>
+              <p className="text-xs text-slate-500">
+                {user?.role.replace("_", " ")}
+              </p>
+            </div>
+            <button
+              title="Log out"
+              onClick={logout}
+              className="rounded-lg p-2 hover:bg-slate-100"
+            >
+              <LogOut size={19} />
+            </button>
+          </div>
+        </header>
+        <main className="p-4 lg:p-8">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+}

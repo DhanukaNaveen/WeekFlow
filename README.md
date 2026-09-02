@@ -10,6 +10,7 @@ WeekFlow is a production-oriented full-stack application for creating structured
 - Member dashboard/history, dynamic report form, correction feedback, and read-only submitted reports
 - Manager filtering, review page, team profiles, cross-team blocker/achievement view, and five data-driven charts
 - Project soft-deactivation and admin user role/status management
+- Optional manager-only Gemini assistant grounded in privacy-filtered report data
 - Zod validation, centralized errors, Helmet/CORS, ownership checks, and Supertest RBAC coverage
 
 ## Stack and architecture
@@ -78,4 +79,4 @@ Capture the seeded member dashboard, manager charts, review/version view, and re
 
 ## Deployment
 
-Build both packages, run `prisma migrate deploy` during release, serve `server/dist/server.js`, and host `client/dist` on a static host. Configure HTTPS, a restricted `CLIENT_URL`, managed PostgreSQL, a rotated `JWT_SECRET`, and platform environment variables. The optional Gemini key is reserved but AI is not included in this core build.
+Build both packages, run `prisma migrate deploy` during release, serve `server/dist/server.js`, and host `client/dist` on a static host. Configure HTTPS, a restricted `CLIENT_URL`, managed PostgreSQL, a rotated `JWT_SECRET`, and platform environment variables. Set `GEMINI_API_KEY` to enable the manager assistant and optionally set `GEMINI_MODEL`; without a key, all core functionality remains available.

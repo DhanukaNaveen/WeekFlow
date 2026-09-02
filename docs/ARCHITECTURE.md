@@ -23,3 +23,9 @@ The manager dashboard service reads related team report data once and returns a 
 ## Data integrity and dates
 
 Relational child sections cascade when a report is removed; projects referenced by reports are deactivated instead of deleted. A unique key prevents duplicate user/project/week reports. ISO date-only week boundaries are stored as PostgreSQL `DATE`; timestamps remain UTC and the UI localizes them for display.
+
+## AI manager assistant
+
+The manager-only `/api/ai/chat` endpoint retrieves up to 60 recent non-draft reports before calling Gemini. The service constructs compact context containing names, projects, week dates, workflow status, work details, blockers, achievements, and hours. Password hashes, emails, links, database IDs, and draft reports are excluded. Report text is explicitly treated as untrusted data in the system instruction.
+
+The model must answer only from supplied context and acknowledge missing evidence. A low temperature favors repeatable summaries. Missing configuration returns `AI assistant is not configured.` without affecting core features. The browser never receives the Gemini key; only Express calls Google.

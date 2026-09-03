@@ -32,8 +32,6 @@ export async function managerDashboard() {
   const monday = new Date();
   monday.setUTCHours(0, 0, 0, 0);
   monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
-  const sunday = new Date(monday);
-  sunday.setUTCDate(sunday.getUTCDate() + 6);
   const nextMonday = new Date(monday);
   nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
   const [reports, members, activity] = await Promise.all([
@@ -53,11 +51,14 @@ export async function managerDashboard() {
     }),
     prisma.activityLog.findMany({ orderBy: { createdAt: "desc" }, take: 10 }),
   ]);
-  const weekly = reports.filter(
-      (r) => r.weekStartDate >= monday && r.weekStartDate <= sunday,
+  const activeMemberIds = new Set(members.map((member) => member.id)),
+    currentWeekReports = reports.filter(
+      (r) => r.weekStartDate >= monday && r.weekStartDate < nextMonday,
     ),
-    createdUsers = new Set(
-      weekly.filter((r) => r.status !== "DRAFT").map((r) => r.userId),
+    submittedMemberIds = new Set(
+      currentWeekReports
+        .filter((report) => activeMemberIds.has(report.userId))
+        .map((report) => report.userId),
     );
   const statusByMember = members.map((m) => {
     const rs = reports.filter((r) => r.userId === m.id);
@@ -95,13 +96,15 @@ export async function managerDashboard() {
           r.submittedAt < nextMonday,
       ).length,
       complianceRate: members.length
-        ? Math.round((createdUsers.size / members.length) * 100)
+        ? Math.round((submittedMemberIds.size / members.length) * 100)
         : 0,
-      pending: members.length - createdUsers.size,
-      approved: weekly.filter((r) => r.status === "APPROVED").length,
-      needsCorrection: weekly.filter((r) => r.status === "NEEDS_CORRECTION")
+      pending: members.length - submittedMemberIds.size,
+      approved: currentWeekReports.filter((r) => r.status === "APPROVED")
         .length,
-      openBlockers: weekly
+      needsCorrection: currentWeekReports.filter(
+        (r) => r.status === "NEEDS_CORRECTION",
+      ).length,
+      openBlockers: currentWeekReports
         .flatMap((r) => r.blockers)
         .filter((b) => b.status === "OPEN").length,
     },
@@ -110,8 +113,11 @@ export async function managerDashboard() {
     workloadByProject: [...byProject].map(([name, value]) => ({ name, value })),
     timeByWorkType: [...byType].map(([name, value]) => ({ name, value })),
     submissionOverview: [
-      { name: "Submitted", value: createdUsers.size },
-      { name: "Not submitted", value: members.length - createdUsers.size },
+      { name: "Submitted", value: submittedMemberIds.size },
+      {
+        name: "Not submitted",
+        value: members.length - submittedMemberIds.size,
+      },
     ],
     recentActivity: activity,
   };

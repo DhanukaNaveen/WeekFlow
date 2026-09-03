@@ -157,31 +157,61 @@ function ManagerDashboard() {
   if (err) return <ErrorBox message={err} />;
   if (!d) return <Loading />;
   const cards = [
-    ["Submitted this week", d.summary.submittedThisWeek],
-    ["Compliance", `${d.summary.complianceRate}%`],
-    ["Pending", d.summary.pending],
-    ["Approved", d.summary.approved],
-    ["Needs correction", d.summary.needsCorrection],
-    ["Open blockers", d.summary.openBlockers],
+    {
+      label: "Reports submitted this week",
+      value: d.summary.submittedThisWeek,
+      help: "Submission date is within this Monday–Sunday.",
+    },
+    {
+      label: "Current-week compliance",
+      value: `${d.summary.complianceRate}%`,
+      help: "Active members who submitted this week's report.",
+    },
+    {
+      label: "Members pending",
+      value: d.summary.pending,
+      help: "Active members yet to submit this week's report.",
+    },
+    {
+      label: "Current-week approved",
+      value: d.summary.approved,
+      help: "This week's reports with Approved status.",
+    },
+    {
+      label: "Current-week corrections",
+      value: d.summary.needsCorrection,
+      help: "This week's reports that need correction.",
+    },
+    {
+      label: "Current-week open blockers",
+      value: d.summary.openBlockers,
+      help: "Open blocker entries in this week's reports.",
+    },
   ];
   return (
     <div className="space-y-6">
       <div>
         <h1 className="page-title">Team dashboard</h1>
         <p className="text-slate-500">
-          Live reporting health and workload insights.
+          Current-week reporting health and workload insights.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        {cards.map((x) => (
-          <div className="card" key={x[0]}>
-            <p className="text-xs text-slate-500">{x[0]}</p>
-            <p className="mt-2 text-2xl font-bold">{x[1]}</p>
+        {cards.map((card) => (
+          <div className="card" key={card.label}>
+            <p className="text-xs font-medium text-slate-600">{card.label}</p>
+            <p className="mt-2 text-2xl font-bold">{card.value}</p>
+            <p className="mt-2 text-xs leading-5 text-slate-400">
+              {card.help}
+            </p>
           </div>
         ))}
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
-        <Chart title="Completed tasks trend">
+        <Chart
+          title="Completed tasks trend (all time)"
+          description="Completed task entries grouped by report week."
+        >
           <ResponsiveContainer width="100%" height={260}>
             <LineChart data={d.taskTrend}>
               <XAxis dataKey="week" />
@@ -196,20 +226,26 @@ function ManagerDashboard() {
             </LineChart>
           </ResponsiveContainer>
         </Chart>
-        <Chart title="Report status by member">
+        <Chart
+          title="Report status by member (all time)"
+          description="Non-draft reports grouped by member and current status."
+        >
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={d.statusByMember}>
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="approved" stackId="a" fill="#10b981" />
-              <Bar dataKey="submitted" stackId="a" fill="#2563eb" />
-              <Bar dataKey="correction" stackId="a" fill="#f59e0b" />
+              <Bar dataKey="approved" fill="#10b981" />
+              <Bar dataKey="submitted" fill="#2563eb" />
+              <Bar dataKey="correction" fill="#f59e0b" />
             </BarChart>
           </ResponsiveContainer>
         </Chart>
-        <Chart title="Task distribution by project">
+        <Chart
+          title="Task distribution by project (all time)"
+          description="All task entries in non-draft reports, grouped by project."
+        >
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
@@ -227,17 +263,32 @@ function ManagerDashboard() {
             </PieChart>
           </ResponsiveContainer>
         </Chart>
-        <Chart title="Time by work type">
+        <Chart
+          title="Time by work type (all time)"
+          description="Total reported hours grouped by work type."
+        >
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={d.timeByWorkType} layout="vertical">
+            <BarChart
+              data={d.timeByWorkType}
+              layout="vertical"
+              margin={{ left: 15 }}
+            >
               <XAxis type="number" />
-              <YAxis type="category" dataKey="name" width={95} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={125}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip />
               <Bar dataKey="value" fill="#8b5cf6" />
             </BarChart>
           </ResponsiveContainer>
         </Chart>
-        <Chart title="Submission / compliance overview">
+        <Chart
+          title="Submission / compliance overview (current week)"
+          description="Active members with or without a submitted current-week report."
+        >
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
@@ -281,14 +332,19 @@ function ManagerDashboard() {
 }
 function Chart({
   title,
+  description,
   children,
 }: {
   title: string;
+  description: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="card">
-      <h2 className="section-title mb-5">{title}</h2>
+      <div className="mb-5">
+        <h2 className="section-title">{title}</h2>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
+      </div>
       {children}
     </div>
   );

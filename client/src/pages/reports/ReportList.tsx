@@ -5,7 +5,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import type { Project, Report, User } from "../../types";
-import { formatDateOnly } from "../../utils/dates";
+import { formatTimestamp } from "../../utils/dates";
 export function ReportList() {
   const { user } = useAuth(),
     manager = user?.role !== "TEAM_MEMBER";
@@ -151,7 +151,6 @@ export function ReportList() {
                   <th>Week</th>
                   <th>Project</th>
                   <th>Submitted</th>
-                  <th>Updated</th>
                   <th>Status</th>
                   <th></th>
                 </tr>
@@ -166,9 +165,8 @@ export function ReportList() {
                     </td>
                     <td>{r.project.name}</td>
                     <td>
-                      {r.submittedAt ? formatDateOnly(r.submittedAt) : "—"}
+                      {r.submittedAt ? formatTimestamp(r.submittedAt) : "—"}
                     </td>
-                    <td>{formatDateOnly(r.updatedAt)}</td>
                     <td>
                       <StatusBadge status={r.status} />
                     </td>

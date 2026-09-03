@@ -73,7 +73,11 @@ function MemberDashboard() {
               NOT STARTED
             </span>
           )}
-          <Link to={currentAction.to} className="btn-primary">
+          <Link
+            to={currentAction.to}
+            state={{ fromDashboard: true }}
+            className="btn-primary"
+          >
             {currentAction.label}
           </Link>
         </div>
@@ -124,7 +128,11 @@ function MemberDashboard() {
                     <StatusBadge status={r.status} />
                   </td>
                   <td>
-                    <Link className="text-blue-600" to={`/reports/${r.id}`}>
+                    <Link
+                      className="text-blue-600"
+                      to={`/reports/${r.id}`}
+                      state={{ fromDashboard: true }}
+                    >
                       View
                     </Link>
                   </td>

@@ -27,6 +27,7 @@ export interface Report {
   notes?: string;
   links: string[];
   submittedAt?: string;
+  correctionUpdatedAt?: string;
   updatedAt: string;
   user: Pick<User, "id" | "name" | "email">;
   project: Project;

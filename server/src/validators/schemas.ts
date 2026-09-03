@@ -26,13 +26,13 @@ const nextTask = z.object({
 });
 const blocker = z.object({
   title: z.string().trim().min(1),
-  description: z.string().min(1),
+  description: z.string().optional().default(""),
   isKeyIssue: z.boolean().default(false),
   status: z.enum(["OPEN", "RESOLVED"]).default("OPEN"),
 });
 const achievement = z.object({
   title: z.string().trim().min(1),
-  description: z.string().min(1),
+  description: z.string().optional().default(""),
   isKeyAchievement: z.boolean().default(false),
 });
 const hours = z.object({
@@ -66,8 +66,22 @@ export const reportSchema = z
       return v.weekStartDate < nextWeek;
     },
     {
-      message: "Reports cannot be created for a future week",
+      message: "Reports cannot be created for a future week.",
       path: ["weekStartDate"],
+    },
+  )
+  .refine(
+    (v) => {
+      const nextWeek = new Date();
+      nextWeek.setUTCHours(0, 0, 0, 0);
+      nextWeek.setUTCDate(
+        nextWeek.getUTCDate() - ((nextWeek.getUTCDay() + 6) % 7) + 7,
+      );
+      return v.weekEndDate < nextWeek;
+    },
+    {
+      message: "The week end cannot be in a future week.",
+      path: ["weekEndDate"],
     },
   )
   .refine((v) => v.blockers.filter((x) => x.isKeyIssue).length <= 1, {

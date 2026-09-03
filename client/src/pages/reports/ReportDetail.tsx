@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
 import { ReportSummary } from "../../components/reports/ReportSummary";
@@ -10,6 +10,7 @@ import { formatTimestamp } from "../../utils/dates";
 import { ArrowLeft } from "lucide-react";
 export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   const { id } = useParams(),
+    location = useLocation(),
     { user } = useAuth();
   const [r, setR] = useState<Report>(),
     [err, setErr] = useState(""),
@@ -19,7 +20,10 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   useEffect(() => {
     api
       .get(`/reports/${id}`)
-      .then((response) => setR(response.data))
+      .then((response) => {
+        setR(response.data);
+        setSelected(response.data.versions[0]);
+      })
       .catch((error) => setErr(errorMessage(error)));
   }, [id]);
   async function action(kind: "approve" | "request-changes") {
@@ -45,11 +49,11 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <Link
-        to="/reports"
+        to={location.state?.fromDashboard ? "/" : "/reports"}
         className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
       >
         <ArrowLeft size={17} />
-        Back to reports
+        {location.state?.fromDashboard ? "Back to dashboard" : "Back to reports"}
       </Link>
       <div className="flex flex-wrap justify-between gap-3">
         <div>
@@ -71,7 +75,7 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
       )}
       {selected && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-          Viewing immutable submitted version {selected.versionNumber} from{" "}
+          Viewing version {selected.versionNumber} from{" "}
           {formatTimestamp(selected.submittedAt)}.
         </div>
       )}
@@ -109,7 +113,7 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
           <h2 className="section-title mb-4">Version history</h2>
           <button
             onClick={() => setSelected(undefined)}
-            className="mb-2 block text-sm font-medium text-blue-600"
+            className={`mb-2 block w-full rounded-lg p-3 text-left text-sm font-medium ${!selected ? "bg-blue-100 text-blue-800 ring-2 ring-blue-300" : "bg-slate-50 text-blue-600 hover:bg-blue-50"}`}
           >
             Current content
           </button>

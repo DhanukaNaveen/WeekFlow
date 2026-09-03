@@ -97,6 +97,9 @@ export async function updateReport(
         weekEndDate: input.weekEndDate,
         notes: input.notes,
         links: input.links,
+        ...(report.status === "NEEDS_CORRECTION"
+          ? { correctionUpdatedAt: new Date() }
+          : {}),
         ...children(input),
       },
       include: reportInclude,
@@ -207,7 +210,13 @@ export async function reviewReport(
     });
     await tx.report.update({
       where: { id },
-      data: { status, approvedAt: action === "APPROVED" ? new Date() : null },
+      data: {
+        status,
+        approvedAt: action === "APPROVED" ? new Date() : null,
+        ...(action === "CHANGES_REQUESTED"
+          ? { correctionUpdatedAt: null }
+          : {}),
+      },
     });
     await tx.activityLog.create({
       data: {

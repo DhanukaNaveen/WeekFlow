@@ -13,7 +13,7 @@ const blank = {
   weekStartDate: weekStart,
   weekEndDate: addDateDays(weekStart, 4),
   notes: "",
-  links: [""],
+  links: [],
   tasks: [
     {
       name: "",
@@ -59,7 +59,7 @@ export function ReportForm() {
             ...d,
             weekStartDate: d.weekStartDate.slice(0, 10),
             weekEndDate: d.weekEndDate.slice(0, 10),
-            links: d.links.length ? d.links : [""],
+            links: d.links,
           });
         })
         .catch((e) => setErr(errorMessage(e)))
@@ -101,6 +101,8 @@ export function ReportForm() {
       errors.push("Week end must be on or after week start.");
     if (input.weekStartDate > currentWeekEnd)
       errors.push("Reports cannot be created for a future week.");
+    if (input.weekEndDate > currentWeekEnd)
+      errors.push("The week end cannot be in a future week.");
     if (!input.tasks.length)
       errors.push("Add at least one completed-task entry.");
     input.tasks.forEach((task: any, index: number) => {
@@ -120,14 +122,14 @@ export function ReportForm() {
         errors.push(`Next-week task ${index + 1} needs a name.`);
     });
     input.blockers.forEach((blocker: any, index: number) => {
-      if (!blocker.title.trim() || !blocker.description.trim())
-        errors.push(`Blocker ${index + 1} needs a title and description.`);
+      if (!blocker.title.trim())
+        errors.push(`Blocker ${index + 1} needs a title.`);
     });
     if (input.blockers.filter((blocker: any) => blocker.isKeyIssue).length > 1)
       errors.push("Only one blocker can be marked as the key issue.");
     input.achievements.forEach((achievement: any, index: number) => {
-      if (!achievement.title.trim() || !achievement.description.trim())
-        errors.push(`Achievement ${index + 1} needs a title and description.`);
+      if (!achievement.title.trim())
+        errors.push(`Achievement ${index + 1} needs a title.`);
     });
     if (
       input.achievements.filter(
@@ -245,6 +247,7 @@ export function ReportForm() {
           Week end
           <input
             type="date"
+            max={currentWeekEnd}
             value={data.weekEndDate}
             onChange={(e) => set("weekEndDate", e.target.value)}
           />
@@ -492,12 +495,9 @@ export function ReportForm() {
                   onClick={() =>
                     set(
                       "links",
-                      data.links.length === 1
-                        ? [""]
-                        : data.links.filter(
-                            (_: string, itemIndex: number) =>
-                              itemIndex !== index,
-                          ),
+                      data.links.filter(
+                        (_: string, itemIndex: number) => itemIndex !== index,
+                      ),
                     )
                   }
                 >
@@ -509,13 +509,15 @@ export function ReportForm() {
         </div>
       </section>
       <div className="flex justify-end gap-3">
-        <button
-          disabled={saving}
-          className="btn-secondary"
-          onClick={() => save(false)}
-        >
-          Save draft
-        </button>
+        {data.status !== "NEEDS_CORRECTION" && (
+          <button
+            disabled={saving}
+            className="btn-secondary"
+            onClick={() => save(false)}
+          >
+            Save draft
+          </button>
+        )}
         <button
           disabled={saving}
           className="btn-primary"

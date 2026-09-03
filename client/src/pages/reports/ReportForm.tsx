@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
+import { ArrowLeft } from "lucide-react";
 import { api, errorMessage } from "../../api/client";
 import { ErrorBox, Loading } from "../../components/common/States";
 import type { Project } from "../../types";
 import { addDateDays, currentWeekStart } from "../../utils/dates";
 const weekStart = currentWeekStart();
+const currentWeekEnd = addDateDays(weekStart, 6);
 const blank = {
   projectId: "",
   weekStartDate: weekStart,
@@ -27,7 +29,7 @@ const blank = {
   nextWeekTasks: [],
   blockers: [],
   achievements: [],
-  workHours: [{ workType: "Development", hours: 0 }],
+  workHours: [],
 };
 export function ReportForm() {
   const { id } = useParams(),
@@ -97,6 +99,8 @@ export function ReportForm() {
       errors.push("Select both week dates.");
     else if (input.weekEndDate < input.weekStartDate)
       errors.push("Week end must be on or after week start.");
+    if (input.weekStartDate > currentWeekEnd)
+      errors.push("Reports cannot be created for a future week.");
     if (!input.tasks.length)
       errors.push("Add at least one completed-task entry.");
     input.tasks.forEach((task: any, index: number) => {
@@ -178,6 +182,15 @@ export function ReportForm() {
     data.status === "NEEDS_CORRECTION" && data.reviews?.[0]?.comment;
   return (
     <div className="mx-auto max-w-5xl space-y-5">
+      {id && (
+        <Link
+          to={`/reports/${id}`}
+          className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+        >
+          <ArrowLeft size={17} />
+          Back to report
+        </Link>
+      )}
       <div>
         <h1 className="page-title">
           {id ? "Update weekly report" : "Create weekly report"}
@@ -223,6 +236,7 @@ export function ReportForm() {
           Week start
           <input
             type="date"
+            max={currentWeekEnd}
             value={data.weekStartDate}
             onChange={(e) => set("weekStartDate", e.target.value)}
           />

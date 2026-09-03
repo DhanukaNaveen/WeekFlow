@@ -56,6 +56,20 @@ export const reportSchema = z
     message: "Week end must be after week start",
     path: ["weekEndDate"],
   })
+  .refine(
+    (v) => {
+      const nextWeek = new Date();
+      nextWeek.setUTCHours(0, 0, 0, 0);
+      nextWeek.setUTCDate(
+        nextWeek.getUTCDate() - ((nextWeek.getUTCDay() + 6) % 7) + 7,
+      );
+      return v.weekStartDate < nextWeek;
+    },
+    {
+      message: "Reports cannot be created for a future week",
+      path: ["weekStartDate"],
+    },
+  )
   .refine((v) => v.blockers.filter((x) => x.isKeyIssue).length <= 1, {
     message: "Only one key issue is allowed",
     path: ["blockers"],
@@ -87,23 +101,29 @@ const isoDate = z
     );
   }, "Use a valid calendar date");
 
+const optionalQuery = <T extends z.ZodTypeAny>(schema: T) =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    schema.optional(),
+  );
+
 export const reportQuerySchema = z
   .object({
-    userId: z.string().min(1).optional(),
-    projectId: z.string().min(1).optional(),
-    status: z
-      .enum([
+    userId: optionalQuery(z.string().min(1)),
+    projectId: optionalQuery(z.string().min(1)),
+    status: optionalQuery(
+      z.enum([
         "DRAFT",
         "SUBMITTED",
         "NEEDS_CORRECTION",
         "APPROVED",
         "NOT_STARTED",
-      ])
-      .optional(),
-    startDate: isoDate.optional(),
-    endDate: isoDate.optional(),
-    page: z.string().regex(/^\d+$/).optional(),
-    limit: z.string().regex(/^\d+$/).optional(),
+      ]),
+    ),
+    startDate: optionalQuery(isoDate),
+    endDate: optionalQuery(isoDate),
+    page: optionalQuery(z.string().regex(/^\d+$/)),
+    limit: optionalQuery(z.string().regex(/^\d+$/)),
   })
   .refine(
     (query) =>

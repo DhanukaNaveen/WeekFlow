@@ -89,6 +89,16 @@ describe("API authorization", () => {
       .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
     expect(response.status).toBe(400);
   });
+  it("accepts empty optional report filters from browser query strings", async () => {
+    mocks.transaction.mockResolvedValue([[], 0]);
+    const response = await request(app)
+      .get(
+        "/api/reports?status=&projectId=&userId=&startDate=&endDate=&page=1&limit=10",
+      )
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
+    expect(response.status).toBe(200);
+    expect(response.body.pagination.total).toBe(0);
+  });
   it("requires a correction comment", async () => {
     const response = await request(app)
       .post("/api/reports/report-b/request-changes")

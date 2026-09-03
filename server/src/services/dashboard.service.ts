@@ -20,7 +20,7 @@ export async function memberDashboard(userId: string) {
         (report) =>
           report.weekStartDate >= monday && report.weekStartDate <= sunday,
       ) ?? null,
-    recent: reports.slice(0, 8),
+    recent: reports.slice(0, 5),
     summary: {
       total: reports.length,
       approved: reports.filter((r) => r.status === "APPROVED").length,

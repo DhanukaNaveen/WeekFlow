@@ -50,31 +50,33 @@ function MemberDashboard() {
     : { label: "Create report", to: "/reports/new" };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div>
         <div>
           <h1 className="page-title">My weekly overview</h1>
           <p className="text-slate-500">
             Stay on top of submissions and feedback.
           </p>
         </div>
-        <Link to={currentAction.to} className="btn-primary">
-          {currentAction.label}
-        </Link>
       </div>
-      <div className="card flex items-center justify-between">
+      <div className="card flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Current week report</p>
           <p className="mt-1 font-semibold">
             {d.current?.project.name ?? "No report started"}
           </p>
         </div>
-        {d.current ? (
-          <StatusBadge status={d.current.status} />
-        ) : (
-          <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
-            NOT STARTED
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {d.current ? (
+            <StatusBadge status={d.current.status} />
+          ) : (
+            <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
+              NOT STARTED
+            </span>
+          )}
+          <Link to={currentAction.to} className="btn-primary">
+            {currentAction.label}
+          </Link>
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         {[

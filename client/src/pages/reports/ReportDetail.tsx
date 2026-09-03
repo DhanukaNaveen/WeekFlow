@@ -7,6 +7,7 @@ import { ErrorBox, Loading } from "../../components/common/States";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Report } from "../../types";
 import { formatTimestamp } from "../../utils/dates";
+import { ArrowLeft } from "lucide-react";
 export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   const { id } = useParams(),
     { user } = useAuth();
@@ -43,6 +44,13 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
     ["DRAFT", "NEEDS_CORRECTION"].includes(r.status);
   return (
     <div className="mx-auto max-w-5xl space-y-5">
+      <Link
+        to="/reports"
+        className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+      >
+        <ArrowLeft size={17} />
+        Back to reports
+      </Link>
       <div className="flex flex-wrap justify-between gap-3">
         <div>
           <h1 className="page-title">Weekly report</h1>

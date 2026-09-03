@@ -42,7 +42,7 @@ export function AppLayout() {
   return (
     <div className="min-h-screen lg:flex">
       <aside
-        className={`fixed inset-y-0 z-30 w-64 bg-navy text-white transition lg:static ${open ? "left-0" : "-left-64 lg:left-0"}`}
+        className={`fixed inset-y-0 z-30 w-64 overflow-y-auto bg-navy text-white transition lg:sticky lg:top-0 lg:h-screen lg:shrink-0 ${open ? "left-0" : "-left-64 lg:left-0"}`}
       >
         <div className="flex h-16 items-center justify-between border-b border-white/10 px-5">
           <span className="text-xl font-bold">
@@ -57,7 +57,7 @@ export function AppLayout() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
+              end={to === "/" || to === "/reports"}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${isActive ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-white/10"}`

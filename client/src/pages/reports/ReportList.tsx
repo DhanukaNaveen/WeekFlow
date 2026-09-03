@@ -31,9 +31,12 @@ export function ReportList() {
   const load = useCallback(() => {
     setLoading(true);
     setErr("");
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([, value]) => value !== ""),
+    );
     api
       .get(manager ? "/reports" : "/reports/my", {
-        params: { ...filters, page, limit: 10 },
+        params: { ...activeFilters, page, limit: 10 },
       })
       .then((r) => {
         setItems(r.data.items);

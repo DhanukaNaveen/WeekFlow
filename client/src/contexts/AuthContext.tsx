@@ -50,7 +50,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await login(email, password);
   };
   const logout = () => {
-    api.post("/auth/logout").catch(() => {});
+    const token = localStorage.getItem("weekflow_token");
+    if (token) {
+      void api
+        .post("/auth/logout", undefined, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .catch(() => {});
+    }
     localStorage.removeItem("weekflow_token");
     localStorage.removeItem("weekflow_user");
     setUser(null);

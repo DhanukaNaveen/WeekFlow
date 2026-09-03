@@ -80,7 +80,7 @@ export function ProjectsPage() {
       setSavingId(x.id);
       await api.delete(`/projects/${x.id}`);
       await load();
-      toast.success("Project removed or safely deactivated");
+      toast.success("Project removed");
     } catch (error) {
       toast.error(errorMessage(error));
     } finally {
@@ -106,7 +106,11 @@ export function ProjectsPage() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <button disabled={!name.trim()} className="btn-primary" onClick={add}>
+        <button
+          disabled={name.trim().length < 2}
+          className="btn-primary"
+          onClick={add}
+        >
           Add project
         </button>
       </div>

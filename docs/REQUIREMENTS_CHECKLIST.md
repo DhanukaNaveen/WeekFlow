@@ -32,7 +32,7 @@ Audited against the 48 numbered sections in the original assignment. Statuses re
 | 26 | UI/UX | PASS | Responsive role-aware sidebar/header, cards, tables, badges, loading/error/empty states, confirmations, disabled states, and toasts. |
 | 27 | Axios API client | PASS | One base client attaches JWTs and handles 401 session expiry globally. |
 | 28 | Seed data | PASS | Admin, manager, four members, four projects, multiple weeks/statuses, tasks/hours/blockers/achievements/reviews/versions/activity, and documented password. |
-| 29 | Automated testing | PASS | Eleven Supertest/Vitest tests cover unauthenticated access, ownership, manager access, manager-route denial, active/current roles, transitions, filters, comments, and AI RBAC. |
+| 29 | Automated testing | PASS | Twelve Supertest/Vitest tests cover unauthenticated access, ownership, manager access, manager-route denial, active/current roles, transitions, valid empty and invalid filters, comments, and AI RBAC. |
 | 30 | Security | PASS | bcrypt, JWT validation, current database role/active checks, RBAC, object authorization, Zod, CORS, Helmet, safe user selects, ignored secrets, and env examples. |
 | 31 | AI manager assistant | PASS | Optional manager-only Gemini service/UI uses database retrieval, privacy minimization, grounding instructions, graceful configuration/timeouts, and documentation. |
 | 32 | ER diagram | PASS | Mermaid source includes every required entity and its important relationships. |

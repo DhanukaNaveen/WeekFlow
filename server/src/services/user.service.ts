@@ -21,6 +21,7 @@ export async function getUserProfile(id: string) {
     select: {
       ...publicUser,
       reports: {
+        where: { status: { not: "DRAFT" } },
         include: {
           project: true,
           _count: {

@@ -117,6 +117,8 @@ export async function getReport(
   if (!report) throw new AppError(404, "Report not found");
   if (user.role === "TEAM_MEMBER" && report.userId !== user.userId)
     throw new AppError(403, "You cannot access another member’s report");
+  if (user.role !== "TEAM_MEMBER" && report.status === "DRAFT")
+    throw new AppError(404, "Report not found");
   return report;
 }
 export async function submitReport(userId: string, id: string) {
@@ -237,6 +239,8 @@ export async function listReports(
     limit = Math.min(100, Math.max(1, Number(q.limit) || 10));
   if ((own || user.role === "TEAM_MEMBER") && q.status === "NOT_STARTED")
     throw new AppError(400, "NOT_STARTED is available only to managers");
+  if (!own && user.role !== "TEAM_MEMBER" && q.status === "DRAFT")
+    throw new AppError(400, "Draft reports are private to their authors");
   if (!own && user.role !== "TEAM_MEMBER" && q.status === "NOT_STARTED") {
     if (!q.startDate)
       throw new AppError(400, "A week start date is required for NOT_STARTED");
@@ -291,7 +295,11 @@ export async function listReports(
     ...(own || user.role === "TEAM_MEMBER" ? { userId: user.userId } : {}),
     ...(q.userId ? { userId: q.userId } : {}),
     ...(q.projectId ? { projectId: q.projectId } : {}),
-    ...(q.status ? { status: q.status as ReportStatus } : {}),
+    ...(q.status
+      ? { status: q.status as ReportStatus }
+      : !own && user.role !== "TEAM_MEMBER"
+        ? { status: { not: "DRAFT" as const } }
+        : {}),
     ...(q.startDate || q.endDate
       ? {
           weekStartDate: {

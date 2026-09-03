@@ -87,11 +87,10 @@ export function ReportList() {
         >
           <option value="">All statuses</option>
           {[
-            "DRAFT",
+            ...(!manager ? ["DRAFT"] : []),
             "SUBMITTED",
             "NEEDS_CORRECTION",
             "APPROVED",
-            ...(manager ? ["NOT_STARTED"] : []),
           ].map((x) => (
             <option key={x}>{x}</option>
           ))}

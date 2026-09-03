@@ -22,9 +22,8 @@ export async function memberDashboard(userId: string) {
       ) ?? null,
     recent: reports.slice(0, 5),
     summary: {
-      total: reports.length,
-      approved: reports.filter((r) => r.status === "APPROVED").length,
-      needsCorrection: reports.filter((r) => r.status === "NEEDS_CORRECTION")
+      pendingApproval: reports.filter((r) => r.status === "SUBMITTED").length,
+      needsAttention: reports.filter((r) => r.status === "NEEDS_CORRECTION")
         .length,
     },
   };
@@ -35,8 +34,11 @@ export async function managerDashboard() {
   monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7));
   const sunday = new Date(monday);
   sunday.setUTCDate(sunday.getUTCDate() + 6);
+  const nextMonday = new Date(monday);
+  nextMonday.setUTCDate(nextMonday.getUTCDate() + 7);
   const [reports, members, activity] = await Promise.all([
     prisma.report.findMany({
+      where: { status: { not: "DRAFT" } },
       include: {
         user: { select: { id: true, name: true } },
         project: true,
@@ -86,7 +88,12 @@ export async function managerDashboard() {
   });
   return {
     summary: {
-      submittedThisWeek: weekly.filter((r) => r.status !== "DRAFT").length,
+      submittedThisWeek: reports.filter(
+        (r) =>
+          r.submittedAt &&
+          r.submittedAt >= monday &&
+          r.submittedAt < nextMonday,
+      ).length,
       complianceRate: members.length
         ? Math.round((createdUsers.size / members.length) * 100)
         : 0,
@@ -110,7 +117,10 @@ export async function managerDashboard() {
   };
 }
 export async function sectionView(section: string, week?: string) {
-  const where = week ? { weekStartDate: new Date(week) } : {};
+  const where = {
+    status: { not: "DRAFT" as const },
+    ...(week ? { weekStartDate: new Date(week) } : {}),
+  };
   return prisma.report.findMany({
     where,
     select: {

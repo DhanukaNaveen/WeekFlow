@@ -11,7 +11,7 @@ const currentWeekEnd = addDateDays(weekStart, 6);
 const blank = {
   projectId: "",
   weekStartDate: weekStart,
-  weekEndDate: addDateDays(weekStart, 4),
+  weekEndDate: addDateDays(weekStart, 6),
   notes: "",
   links: [],
   tasks: [
@@ -66,6 +66,26 @@ export function ReportForm() {
         .finally(() => setLoading(false));
   }, [id, nav]);
   const set = (k: string, v: any) => setData((d: any) => ({ ...d, [k]: v }));
+  const selectWeekStart = (value: string) => {
+    if (!value) {
+      setData((current: any) => ({
+        ...current,
+        weekStartDate: "",
+        weekEndDate: "",
+      }));
+      return;
+    }
+    const selectedDay = new Date(`${value}T00:00:00.000Z`).getUTCDay();
+    if (selectedDay !== 1) {
+      toast.error("Select a Monday as the week start.");
+      return;
+    }
+    setData((current: any) => ({
+      ...current,
+      weekStartDate: value,
+      weekEndDate: addDateDays(value, 6),
+    }));
+  };
   const row = (section: string, i: number, k: string, v: any) =>
     set(
       section,
@@ -97,9 +117,16 @@ export function ReportForm() {
     if (!input.projectId) errors.push("Select a project.");
     if (!input.weekStartDate || !input.weekEndDate)
       errors.push("Select both week dates.");
-    else if (input.weekEndDate < input.weekStartDate)
-      errors.push("Week end must be on or after week start.");
-    if (input.weekStartDate > currentWeekEnd)
+    else {
+      const startDay = new Date(
+        `${input.weekStartDate}T00:00:00.000Z`,
+      ).getUTCDay();
+      if (startDay !== 1)
+        errors.push("Week start must be a Monday.");
+      if (input.weekEndDate !== addDateDays(input.weekStartDate, 6))
+        errors.push("Week end must be the Sunday after week start.");
+    }
+    if (input.weekStartDate > weekStart)
       errors.push("Reports cannot be created for a future week.");
     if (input.weekEndDate > currentWeekEnd)
       errors.push("The week end cannot be in a future week.");
@@ -238,18 +265,19 @@ export function ReportForm() {
           Week start
           <input
             type="date"
-            max={currentWeekEnd}
+            min="1970-01-05"
+            max={weekStart}
+            step={7}
             value={data.weekStartDate}
-            onChange={(e) => set("weekStartDate", e.target.value)}
+            onChange={(e) => selectWeekStart(e.target.value)}
           />
         </label>
         <label>
           Week end
           <input
             type="date"
-            max={currentWeekEnd}
             value={data.weekEndDate}
-            onChange={(e) => set("weekEndDate", e.target.value)}
+            disabled
           />
         </label>
       </section>

@@ -11,11 +11,16 @@ const publicUser = {
   createdAt: true,
 } as const;
 
-export function listUsers() {
-  return prisma.user.findMany({ select: publicUser, orderBy: { name: "asc" } });
+export function listUsers(requesterRole: Role) {
+  return prisma.user.findMany({
+    where: requesterRole === "MANAGER" ? { role: "TEAM_MEMBER" } : undefined,
+    select: publicUser,
+    orderBy: { name: "asc" },
+  });
 }
 
 export async function getUserProfile(
+  requesterRole: Role,
   id: string,
   { page, limit }: { page: number; limit: number },
 ) {
@@ -24,6 +29,8 @@ export async function getUserProfile(
     select: publicUser,
   });
   if (!user) throw new AppError(404, "User not found");
+  if (requesterRole === "MANAGER" && user.role !== "TEAM_MEMBER")
+    throw new AppError(404, "User not found");
 
   const reportWhere = { userId: id, status: { not: "DRAFT" as const } };
   const [
@@ -44,7 +51,7 @@ export async function getUserProfile(
           status: true,
           project: true,
         },
-        orderBy: { weekStartDate: "desc" },
+        orderBy: [{ weekStartDate: "desc" }, { id: "desc" }],
         skip: (page - 1) * limit,
         take: limit,
       }),

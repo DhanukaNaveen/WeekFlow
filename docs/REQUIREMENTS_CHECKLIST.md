@@ -11,7 +11,7 @@ Audited against the 48 numbered sections in the original assignment. Statuses re
 | 5 | Exact report workflow | PASS | Backend permits only draft/correction edits, owner submissions, and manager review of submitted reports; correction comments are mandatory. |
 | 6 | Report version history | PASS | Every submit/resubmit transaction creates an immutable numbered snapshot; reviews link to the reviewed version. |
 | 7 | Fixed weekly report structure | PASS | Basic information, repeatable completed/next tasks, blockers, achievements, hours, notes, and multiple links use fixed fields and enums. |
-| 8 | Normalized database design | PASS | All required models, enums, relations, uniqueness, indexes, migration lock, and three applied migrations are present with zero live schema drift. |
+| 8 | Normalized database design | PASS | All required models, enums, relations, uniqueness, indexes, migration lock, and five applied migrations are present with zero live schema drift. |
 | 9 | Required routed pages | PASS | Public, member, manager, admin, cross-team, and AI routes provide more than the minimum views; account settings was optional. |
 | 10 | Team member dashboard | PASS | Current-week status and contextual create/continue/view action, recent reports, correction alert, approved/correction counts, badges, and empty state. |
 | 11 | Weekly report form | PASS | Dynamic sections, multiple links, client/server validation, feedback, save/submit actions, and redirect protection for immutable reports. |
@@ -32,7 +32,7 @@ Audited against the 48 numbered sections in the original assignment. Statuses re
 | 26 | UI/UX | PASS | Responsive role-aware sidebar/header, cards, tables, badges, loading/error/empty states, confirmations, disabled states, and toasts. |
 | 27 | Axios API client | PASS | One base client attaches JWTs and handles 401 session expiry globally. |
 | 28 | Seed data | PASS | Admin, manager, four members, four projects with assignments, multiple weeks/statuses, tasks/hours/blockers/achievements/reviews/versions/activity, and documented password. |
-| 29 | Automated testing | PASS | Fifteen Supertest/Vitest tests cover unauthenticated access, ownership, manager access, manager-route denial, project-assignment authorization and replacement, active/current roles, transitions, valid empty and invalid filters, comments, and AI RBAC. |
+| 29 | Automated testing | PASS | Twenty-six Supertest/Vitest tests cover malformed requests, unauthenticated access, ownership, manager/admin data boundaries, manager-route denial, project-assignment authorization and replacement, current roles, week invariants and legacy compatibility, transitions, version creation/resubmission, duplicate claims, filters, comments, and AI RBAC. |
 | 30 | Security | PASS | bcrypt, JWT validation, current database role/active checks, RBAC, object authorization, Zod, CORS, Helmet, safe user selects, ignored secrets, and env examples. |
 | 31 | AI manager assistant | PASS | Optional manager-only Gemini service/UI uses database retrieval, privacy minimization, grounding instructions, graceful configuration/timeouts, and documentation. |
 | 32 | ER diagram | PASS | Mermaid source includes every required entity and its important relationships. |

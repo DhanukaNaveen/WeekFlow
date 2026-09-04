@@ -10,6 +10,14 @@ const mocks = vi.hoisted(() => ({
   userFindMany: vi.fn(),
   projectFindFirst: vi.fn(),
   projectFindUnique: vi.fn(),
+  reportUpdateMany: vi.fn(),
+  txReportFindUnique: vi.fn(),
+  versionCount: vi.fn(),
+  versionCreate: vi.fn(),
+  reviewCreate: vi.fn(),
+  activityCreate: vi.fn(),
+  childDeleteMany: vi.fn(),
+  reportUpdate: vi.fn(),
   assignmentDeleteMany: vi.fn(),
   assignmentCreateMany: vi.fn(),
 }));
@@ -49,13 +57,32 @@ describe("API authorization", () => {
     mocks.userFindUnique.mockImplementation(
       ({ where }: { where: { id: string } }) => ({
         id: where.id,
-        role: where.id.includes("manager") ? "MANAGER" : "TEAM_MEMBER",
+        role: where.id.includes("admin")
+          ? "ADMIN"
+          : where.id.includes("manager")
+            ? "MANAGER"
+            : "TEAM_MEMBER",
         isActive: true,
       }),
     );
   });
+  it("prevents a team member from reviewing a report", async () => {
+    const response = await request(app)
+      .post("/api/reports/report-b/approve")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({});
+    expect(response.status).toBe(403);
+  });
   it("rejects unauthenticated protected requests", async () => {
     expect((await request(app).get("/api/reports/my")).status).toBe(401);
+  });
+  it("returns 400 for malformed JSON instead of an internal error", async () => {
+    const response = await request(app)
+      .post("/api/auth/login")
+      .set("Content-Type", "application/json")
+      .send('{"email":');
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Malformed JSON request body");
   });
   it("rejects an existing token after its account is deactivated", async () => {
     mocks.userFindUnique.mockResolvedValueOnce({
@@ -86,6 +113,31 @@ describe("API authorization", () => {
       .get("/api/reports/report-b")
       .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
     expect(r.status).toBe(200);
+  });
+  it("limits manager user listings to team members", async () => {
+    mocks.userFindMany.mockResolvedValue([]);
+    const response = await request(app)
+      .get("/api/users")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
+    expect(response.status).toBe(200);
+    expect(mocks.userFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { role: "TEAM_MEMBER" } }),
+    );
+  });
+  it("hides non-member profiles from managers", async () => {
+    mocks.userFindUnique
+      .mockResolvedValueOnce({ id: "manager", role: "MANAGER", isActive: true })
+      .mockResolvedValueOnce({
+        id: "admin-target",
+        name: "Admin",
+        email: "admin@example.com",
+        role: "ADMIN",
+        isActive: true,
+      });
+    const response = await request(app)
+      .get("/api/users/admin-target")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`);
+    expect(response.status).toBe(404);
   });
   it("prevents a member from accessing manager report listing", async () => {
     const r = await request(app)
@@ -127,6 +179,79 @@ describe("API authorization", () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toBe("Select an assigned active project");
   });
+  it("rejects a non-Monday report week", async () => {
+    const response = await request(app)
+      .post("/api/reports")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({
+        projectId: "project-a",
+        weekStartDate: "2026-09-01",
+        weekEndDate: "2026-09-06",
+      });
+    expect(response.status).toBe(400);
+    expect(mocks.projectFindFirst).not.toHaveBeenCalled();
+  });
+  it("rejects a week end that is not the following Sunday", async () => {
+    const response = await request(app)
+      .post("/api/reports")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({
+        projectId: "project-a",
+        weekStartDate: "2026-08-31",
+        weekEndDate: "2026-09-05",
+      });
+    expect(response.status).toBe(400);
+  });
+  it("allows an unchanged legacy week to complete a correction", async () => {
+    const updatedAt = new Date("2026-08-30T00:00:00.000Z");
+    mocks.findUnique.mockResolvedValueOnce({
+      id: "legacy-report",
+      userId: "member-a",
+      projectId: "project-a",
+      weekStartDate: new Date("2026-08-23T00:00:00.000Z"),
+      weekEndDate: new Date("2026-08-29T00:00:00.000Z"),
+      status: "NEEDS_CORRECTION",
+      updatedAt,
+    });
+    mocks.reportUpdateMany.mockResolvedValue({ count: 1 });
+    mocks.childDeleteMany.mockResolvedValue({ count: 0 });
+    mocks.reportUpdate.mockResolvedValue({
+      id: "legacy-report",
+      status: "NEEDS_CORRECTION",
+    });
+    mocks.transaction.mockImplementationOnce(async (callback) =>
+      callback({
+        report: {
+          updateMany: mocks.reportUpdateMany,
+          update: mocks.reportUpdate,
+        },
+        reportTask: { deleteMany: mocks.childDeleteMany },
+        nextWeekTask: { deleteMany: mocks.childDeleteMany },
+        blocker: { deleteMany: mocks.childDeleteMany },
+        achievement: { deleteMany: mocks.childDeleteMany },
+        workHour: { deleteMany: mocks.childDeleteMany },
+      }),
+    );
+    const response = await request(app)
+      .patch("/api/reports/legacy-report")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({
+        projectId: "project-a",
+        weekStartDate: "2026-08-23",
+        weekEndDate: "2026-08-29",
+        tasks: [{
+          name: "Corrected legacy task",
+          priority: "MEDIUM",
+          plannedPercentage: 100,
+          actualPercentage: 100,
+          status: "COMPLETED",
+          plannedTime: 8,
+          actualTime: 8,
+          deliverable: "Done",
+        }],
+      });
+    expect(response.status).toBe(200);
+  });
   it("uses the current database role instead of a stale JWT role", async () => {
     const response = await request(app)
       .get("/api/reports")
@@ -156,6 +281,13 @@ describe("API authorization", () => {
       .send({ comment: "" });
     expect(response.status).toBe(400);
   });
+  it("validates an approval request body", async () => {
+    const response = await request(app)
+      .post("/api/reports/report-b/approve")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`)
+      .send({ comment: { invalid: true } });
+    expect(response.status).toBe(400);
+  });
   it("rejects an invalid submission status transition", async () => {
     mocks.findUnique.mockResolvedValue({
       id: "r1",
@@ -171,6 +303,106 @@ describe("API authorization", () => {
       .post("/api/reports/r1/submit")
       .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
     expect(r.status).toBe(409);
+  });
+  it("creates the next immutable version on submission and resubmission", async () => {
+    const runSubmission = async (
+      status: "DRAFT" | "NEEDS_CORRECTION",
+      existingVersionCount: number,
+    ) => {
+      const updatedAt = new Date("2026-09-01T00:00:00.000Z");
+      mocks.findUnique.mockResolvedValueOnce({
+        id: `report-${existingVersionCount}`,
+        userId: "member-a",
+        projectId: "project-a",
+        weekStartDate: new Date("2026-08-31T00:00:00.000Z"),
+        weekEndDate: new Date("2026-09-06T00:00:00.000Z"),
+        status,
+        updatedAt,
+        notes: null,
+        links: [],
+        tasks: [{ name: "Validated task" }],
+        nextWeekTasks: [],
+        blockers: [],
+        achievements: [],
+        workHours: [],
+        project: { id: "project-a", name: "QA Project" },
+        user: { name: "Member A" },
+      });
+      mocks.projectFindFirst.mockResolvedValue({ id: "project-a" });
+      mocks.reportUpdateMany.mockResolvedValue({ count: 1 });
+      mocks.versionCount.mockResolvedValue(existingVersionCount);
+      mocks.versionCreate.mockResolvedValue({ id: "version" });
+      mocks.activityCreate.mockResolvedValue({ id: "activity" });
+      mocks.txReportFindUnique.mockResolvedValue({
+        id: `report-${existingVersionCount}`,
+        status: "SUBMITTED",
+      });
+      mocks.transaction.mockImplementationOnce(async (callback) =>
+        callback({
+          report: {
+            updateMany: mocks.reportUpdateMany,
+            findUnique: mocks.txReportFindUnique,
+          },
+          reportVersion: {
+            count: mocks.versionCount,
+            create: mocks.versionCreate,
+          },
+          activityLog: { create: mocks.activityCreate },
+        }),
+      );
+      const response = await request(app)
+        .post(`/api/reports/report-${existingVersionCount}/submit`)
+        .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
+      expect(response.status).toBe(200);
+      expect(mocks.versionCreate).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            versionNumber: existingVersionCount + 1,
+            snapshot: expect.objectContaining({
+              project: { id: "project-a", name: "QA Project" },
+            }),
+          }),
+        }),
+      );
+    };
+    await runSubmission("DRAFT", 0);
+    await runSubmission("NEEDS_CORRECTION", 1);
+  });
+  it("rejects a duplicate concurrent submission claim", async () => {
+    mocks.findUnique.mockResolvedValueOnce({
+      id: "report-race",
+      userId: "member-a",
+      projectId: "project-a",
+      weekStartDate: new Date("2026-08-31T00:00:00.000Z"),
+      weekEndDate: new Date("2026-09-06T00:00:00.000Z"),
+      status: "DRAFT",
+      updatedAt: new Date("2026-09-01T00:00:00.000Z"),
+      notes: null,
+      links: [],
+      tasks: [{ name: "Validated task" }],
+      nextWeekTasks: [],
+      blockers: [],
+      achievements: [],
+      workHours: [],
+      user: { name: "Member A" },
+    });
+    mocks.projectFindFirst.mockResolvedValue({ id: "project-a" });
+    mocks.reportUpdateMany.mockResolvedValue({ count: 0 });
+    mocks.transaction.mockImplementationOnce(async (callback) =>
+      callback({ report: { updateMany: mocks.reportUpdateMany } }),
+    );
+    const response = await request(app)
+      .post("/api/reports/report-race/submit")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
+    expect(response.status).toBe(409);
+    expect(mocks.versionCreate).not.toHaveBeenCalled();
+  });
+  it("prevents an admin from changing their own role", async () => {
+    const response = await request(app)
+      .patch("/api/users/admin-self/role")
+      .set("Authorization", `Bearer ${token("admin-self", "ADMIN")}`)
+      .send({ role: "TEAM_MEMBER" });
+    expect(response.status).toBe(400);
   });
   it("prevents a team member from using the manager AI assistant", async () => {
     const response = await request(app)

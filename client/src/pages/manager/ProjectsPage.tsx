@@ -15,6 +15,7 @@ export function ProjectsPage() {
     [editDescription, setEditDescription] = useState(""),
     [assigningProject, setAssigningProject] = useState<Project | null>(null),
     [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]),
+    [creating, setCreating] = useState(false),
     [savingId, setSavingId] = useState<string | null>(null),
     [err, setErr] = useState("");
   const load = async () => {
@@ -36,6 +37,8 @@ export function ProjectsPage() {
     void load();
   }, []);
   async function add() {
+    if (creating) return;
+    setCreating(true);
     try {
       await api.post("/projects", { name, description });
       setName("");
@@ -44,6 +47,8 @@ export function ProjectsPage() {
       toast.success("Project created");
     } catch (e) {
       toast.error(errorMessage(e));
+    } finally {
+      setCreating(false);
     }
   }
   async function toggle(x: Project) {
@@ -144,11 +149,11 @@ export function ProjectsPage() {
           onChange={(e) => setDescription(e.target.value)}
         /></label>
         <button
-          disabled={name.trim().length < 2}
+          disabled={name.trim().length < 2 || creating}
           className="btn-primary"
           onClick={add}
         >
-          <Plus size={17} />Add project
+          <Plus size={17} />{creating ? "Creating..." : "Add project"}
         </button>
       </div>
       {!p.length ? (

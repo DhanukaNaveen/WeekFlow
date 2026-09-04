@@ -35,7 +35,7 @@ export function ReportSummary({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-slate-500">
-              {report.user?.name} · {report.project?.name}
+              {report.user?.name} · {data.project?.name ?? report.project?.name}
             </p>
             <h2 className="mt-1 text-xl font-bold text-slate-950">
               {formatWeekRange(data.weekStartDate, data.weekEndDate)}

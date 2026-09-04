@@ -1,42 +1,42 @@
 import { z } from "zod";
 
 export const registerSchema = z.object({
-  name: z.string().trim().min(2),
-  email: z.string().email(),
-  password: z.string().min(8),
+  name: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(8).max(128),
 });
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().trim().email().max(254),
+  password: z.string().min(1).max(128),
 });
 const task = z.object({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(200),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   plannedPercentage: z.number().int().min(0).max(100),
   actualPercentage: z.number().int().min(0).max(100),
   status: z.enum(["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "BLOCKED"]),
-  plannedTime: z.number().min(0),
-  actualTime: z.number().min(0),
-  deliverable: z.string(),
+  plannedTime: z.number().min(0).max(168),
+  actualTime: z.number().min(0).max(168),
+  deliverable: z.string().max(2000),
 });
 const nextTask = z.object({
-  name: z.string().trim().min(1),
-  description: z.string().optional().default(""),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().max(5000).optional().default(""),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
 });
 const blocker = z.object({
-  title: z.string().trim().min(1),
-  description: z.string().optional().default(""),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(5000).optional().default(""),
   isKeyIssue: z.boolean().default(false),
   status: z.enum(["OPEN", "RESOLVED"]).default("OPEN"),
 });
 const achievement = z.object({
-  title: z.string().trim().min(1),
-  description: z.string().optional().default(""),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(5000).optional().default(""),
   isKeyAchievement: z.boolean().default(false),
 });
 const hours = z.object({
-  workType: z.string().trim().min(1),
+  workType: z.string().trim().min(1).max(100),
   hours: z.number().min(0).max(168),
 });
 export const reportSchema = z
@@ -44,13 +44,13 @@ export const reportSchema = z
     projectId: z.string().min(1),
     weekStartDate: z.coerce.date(),
     weekEndDate: z.coerce.date(),
-    notes: z.string().optional().nullable(),
-    links: z.array(z.string().url()).default([]),
-    tasks: z.array(task).default([]),
-    nextWeekTasks: z.array(nextTask).default([]),
-    blockers: z.array(blocker).default([]),
-    achievements: z.array(achievement).default([]),
-    workHours: z.array(hours).default([]),
+    notes: z.string().max(10000).optional().nullable(),
+    links: z.array(z.string().url().max(2048)).max(50).default([]),
+    tasks: z.array(task).max(100).default([]),
+    nextWeekTasks: z.array(nextTask).max(100).default([]),
+    blockers: z.array(blocker).max(100).default([]),
+    achievements: z.array(achievement).max(100).default([]),
+    workHours: z.array(hours).max(100).default([]),
   })
   .refine((v) => v.weekEndDate >= v.weekStartDate, {
     message: "Week end must be after week start",
@@ -93,8 +93,8 @@ export const reportSchema = z
     path: ["achievements"],
   });
 export const projectSchema = z.object({
-  name: z.string().trim().min(2),
-  description: z.string().optional().nullable(),
+  name: z.string().trim().min(2).max(120),
+  description: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional(),
 });
 export const projectMembersSchema = z.object({
@@ -109,6 +109,9 @@ export const correctionSchema = z.object({
     .trim()
     .min(1, "A correction comment is required")
     .max(2000),
+});
+export const approvalSchema = z.object({
+  comment: z.string().trim().max(2000).optional(),
 });
 
 const isoDate = z

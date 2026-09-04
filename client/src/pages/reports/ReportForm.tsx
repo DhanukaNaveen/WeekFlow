@@ -197,7 +197,7 @@ export function ReportForm() {
     setValidationErrors(errors);
     if (errors.length) {
       toast.error("Please correct the highlighted form issues.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      document.querySelector("main")?.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
     setSaving(true);

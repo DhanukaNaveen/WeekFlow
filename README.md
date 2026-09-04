@@ -59,6 +59,8 @@ npx prisma migrate deploy
 npx prisma db seed
 ```
 
+Keep `schema=public` in the PostgreSQL connection URL (append `&schema=public` when the URL already has query parameters). Prisma application queries can otherwise work while migration commands fail to locate the `_prisma_migrations` table because the connection search path is empty.
+
 ## Verification commands
 
 ```bash
@@ -114,3 +116,5 @@ Capture the seeded member dashboard, manager charts, review/version view, and re
 ## Deployment
 
 Build both packages, run `prisma migrate deploy` during release, serve `server/dist/server.js`, and host `client/dist` on a static host. Configure HTTPS, a restricted `CLIENT_URL`, managed PostgreSQL, a rotated `JWT_SECRET`, and platform environment variables. Set `GEMINI_API_KEY` to enable the manager assistant and optionally set `GEMINI_MODEL`; without a key, all core functionality remains available.
+
+Because the client uses browser-history routing, configure the static host to rewrite unknown routes to `client/dist/index.html`. Without this SPA fallback, refreshing a direct URL such as `/reports/:id` can return the host's 404 page.

@@ -60,7 +60,18 @@ async function requireAssignedActiveProject(userId: string, projectId: string) {
     throw new AppError(400, "Select an assigned active project");
 }
 
+function requireStandardWeek(weekStartDate: Date, weekEndDate: Date) {
+  if (weekStartDate.getUTCDay() !== 1)
+    throw new AppError(400, "Week start must be a Monday");
+  if (
+    weekEndDate.getUTCDay() !== 0 ||
+    weekEndDate.getTime() - weekStartDate.getTime() !== 6 * 86400000
+  )
+    throw new AppError(400, "Week end must be the Sunday after week start");
+}
+
 export async function createReport(userId: string, input: ReportInput) {
+  requireStandardWeek(input.weekStartDate, input.weekEndDate);
   await requireAssignedActiveProject(userId, input.projectId);
   return prisma.report.create({
     data: {
@@ -86,9 +97,34 @@ export async function updateReport(
     throw new AppError(403, "You can only edit your own reports");
   if (!["DRAFT", "NEEDS_CORRECTION"].includes(report.status))
     throw new AppError(409, "This report is read-only in its current status");
+  if (
+    input.weekStartDate.getTime() !== report.weekStartDate.getTime() ||
+    input.weekEndDate.getTime() !== report.weekEndDate.getTime()
+  )
+    requireStandardWeek(input.weekStartDate, input.weekEndDate);
   if (report.status === "DRAFT" || input.projectId !== report.projectId)
     await requireAssignedActiveProject(userId, input.projectId);
   return prisma.$transaction(async (tx) => {
+    const claimed = await tx.report.updateMany({
+      where: {
+        id,
+        userId,
+        status: { in: ["DRAFT", "NEEDS_CORRECTION"] },
+        updatedAt: report.updatedAt,
+      },
+      data: {
+        projectId: input.projectId,
+        weekStartDate: input.weekStartDate,
+        weekEndDate: input.weekEndDate,
+        notes: input.notes,
+        links: input.links,
+        ...(report.status === "NEEDS_CORRECTION"
+          ? { correctionUpdatedAt: new Date() }
+          : {}),
+      },
+    });
+    if (claimed.count !== 1)
+      throw new AppError(409, "Report changed while it was being edited; reload and try again");
     await Promise.all([
       tx.reportTask.deleteMany({ where: { reportId: id } }),
       tx.nextWeekTask.deleteMany({ where: { reportId: id } }),
@@ -99,14 +135,6 @@ export async function updateReport(
     return tx.report.update({
       where: { id },
       data: {
-        projectId: input.projectId,
-        weekStartDate: input.weekStartDate,
-        weekEndDate: input.weekEndDate,
-        notes: input.notes,
-        links: input.links,
-        ...(report.status === "NEEDS_CORRECTION"
-          ? { correctionUpdatedAt: new Date() }
-          : {}),
         ...children(input),
       },
       include: reportInclude,
@@ -137,6 +165,7 @@ export async function submitReport(userId: string, id: string) {
       blockers: true,
       achievements: true,
       workHours: true,
+      project: { select: { id: true, name: true } },
       user: { select: { name: true } },
     },
   });
@@ -150,10 +179,22 @@ export async function submitReport(userId: string, id: string) {
   if (!report.tasks.length)
     throw new AppError(400, "At least one completed-task entry is required");
   return prisma.$transaction(async (tx) => {
-    const count = await tx.reportVersion.count({ where: { reportId: id } });
     const submittedAt = new Date();
+    const claimed = await tx.report.updateMany({
+      where: {
+        id,
+        userId,
+        status: { in: ["DRAFT", "NEEDS_CORRECTION"] },
+        updatedAt: report.updatedAt,
+      },
+      data: { status: "SUBMITTED", submittedAt },
+    });
+    if (claimed.count !== 1)
+      throw new AppError(409, "Report was already changed or submitted");
+    const count = await tx.reportVersion.count({ where: { reportId: id } });
     const snapshot = {
       projectId: report.projectId,
+      project: report.project,
       weekStartDate: report.weekStartDate,
       weekEndDate: report.weekEndDate,
       notes: report.notes,
@@ -172,11 +213,6 @@ export async function submitReport(userId: string, id: string) {
         submittedAt,
       },
     });
-    const updated = await tx.report.update({
-      where: { id },
-      data: { status: "SUBMITTED", submittedAt },
-      include: reportInclude,
-    });
     await tx.activityLog.create({
       data: {
         actorId: userId,
@@ -184,7 +220,7 @@ export async function submitReport(userId: string, id: string) {
         description: `${report.user.name} ${count ? "resubmitted" : "submitted"} the report for ${report.weekStartDate.toISOString().slice(0, 10)}`,
       },
     });
-    return updated;
+    return tx.report.findUnique({ where: { id }, include: reportInclude });
   });
 }
 export async function reviewReport(
@@ -210,6 +246,18 @@ export async function reviewReport(
   const status: ReportStatus =
     action === "APPROVED" ? "APPROVED" : "NEEDS_CORRECTION";
   return prisma.$transaction(async (tx) => {
+    const claimed = await tx.report.updateMany({
+      where: { id, status: "SUBMITTED", updatedAt: report.updatedAt },
+      data: {
+        status,
+        approvedAt: action === "APPROVED" ? new Date() : null,
+        ...(action === "CHANGES_REQUESTED"
+          ? { correctionUpdatedAt: null }
+          : {}),
+      },
+    });
+    if (claimed.count !== 1)
+      throw new AppError(409, "Report was already reviewed or changed");
     await tx.review.create({
       data: {
         reportId: id,
@@ -217,16 +265,6 @@ export async function reviewReport(
         versionId: version.id,
         action,
         comment: comment?.trim(),
-      },
-    });
-    await tx.report.update({
-      where: { id },
-      data: {
-        status,
-        approvedAt: action === "APPROVED" ? new Date() : null,
-        ...(action === "CHANGES_REQUESTED"
-          ? { correctionUpdatedAt: null }
-          : {}),
       },
     });
     await tx.activityLog.create({
@@ -286,7 +324,7 @@ export async function listReports(
         id: `not-started-${m.id}`,
         userId: m.id,
         weekStartDate: week,
-        weekEndDate: new Date(week.getTime() + 4 * 86400000),
+        weekEndDate: new Date(week.getTime() + 6 * 86400000),
         status: "NOT_STARTED",
         updatedAt: week,
         user: m,
@@ -311,10 +349,12 @@ export async function listReports(
         : {}),
     ...(q.startDate || q.endDate
       ? {
-          weekStartDate: {
-            ...(q.startDate ? { gte: new Date(q.startDate) } : {}),
-            ...(q.endDate ? { lte: new Date(q.endDate) } : {}),
-          },
+          ...(q.startDate
+            ? { weekStartDate: { gte: new Date(q.startDate) } }
+            : {}),
+          ...(q.endDate
+            ? { weekEndDate: { lte: new Date(q.endDate) } }
+            : {}),
         }
       : {}),
   };
@@ -327,7 +367,7 @@ export async function listReports(
         _count: { select: { tasks: true, blockers: true } },
         reviews: { orderBy: { createdAt: "desc" }, take: 1 },
       },
-      orderBy: { weekStartDate: "desc" },
+      orderBy: [{ weekStartDate: "desc" }, { id: "desc" }],
       skip: (page - 1) * limit,
       take: limit,
     }),

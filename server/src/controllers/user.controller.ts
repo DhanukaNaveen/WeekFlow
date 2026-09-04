@@ -11,13 +11,13 @@ const profileQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
 
-export const list = async (_req: Request, res: Response) =>
-  res.json(await users.listUsers());
+export const list = async (req: Request, res: Response) =>
+  res.json(await users.listUsers(req.user!.role));
 
 export const profile = async (req: Request, res: Response) => {
   const pagination = profileQuerySchema.parse(req.query);
   return res.json(
-    await users.getUserProfile(String(req.params.id), pagination),
+    await users.getUserProfile(req.user!.role, String(req.params.id), pagination),
   );
 };
 

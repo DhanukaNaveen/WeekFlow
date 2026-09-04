@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import {
+  approvalSchema,
   correctionSchema,
   reportQuerySchema,
   reportSchema,
@@ -44,7 +45,7 @@ export const approve = async (req: Request, res: Response) =>
       req.user!.userId,
       String(req.params.id),
       "APPROVED",
-      req.body.comment,
+      approvalSchema.parse(req.body ?? {}).comment,
     ),
   );
 export const changes = async (req: Request, res: Response) =>

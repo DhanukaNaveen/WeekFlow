@@ -10,6 +10,15 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return res
       .status(400)
       .json({ message: "Validation failed", errors: err.flatten() });
+  if (
+    err instanceof SyntaxError &&
+    (err as SyntaxError & { status?: number }).status === 400
+  )
+    return res.status(400).json({ message: "Malformed JSON request body" });
+  if (typeof err?.status === "number" && err.status >= 400 && err.status < 500)
+    return res.status(err.status).json({
+      message: err.status === 413 ? "Request body is too large" : "Invalid request",
+    });
   if (err instanceof AppError)
     return res
       .status(err.statusCode)

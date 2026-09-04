@@ -122,22 +122,105 @@ export async function managerDashboard() {
     recentActivity: activity,
   };
 }
-export async function sectionView(section: string, week?: string) {
-  const where = {
+export async function sectionView(
+  section: "BLOCKERS" | "ACHIEVEMENTS",
+  week?: string,
+  page = 1,
+  limit = 10,
+) {
+  const reportWhere = {
     status: { not: "DRAFT" as const },
     ...(week ? { weekStartDate: new Date(week) } : {}),
+    ...(section === "BLOCKERS"
+      ? { blockers: { some: {} } }
+      : { achievements: { some: {} } }),
   };
-  return prisma.report.findMany({
-    where,
-    select: {
-      id: true,
-      user: { select: { name: true } },
-      project: { select: { name: true } },
-      blockers: section === "BLOCKERS",
-      achievements: section === "ACHIEVEMENTS",
+  const skip = (page - 1) * limit;
+
+  if (section === "BLOCKERS") {
+    const [reports, total] = await prisma.$transaction([
+      prisma.report.findMany({
+        where: reportWhere,
+        select: {
+          id: true,
+          weekStartDate: true,
+          weekEndDate: true,
+          user: { select: { name: true } },
+          project: { select: { name: true } },
+          blockers: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              isKeyIssue: true,
+              status: true,
+            },
+            orderBy: { title: "asc" },
+          },
+        },
+        orderBy: [{ weekStartDate: "desc" }, { user: { name: "asc" } }],
+        skip,
+        take: limit,
+      }),
+      prisma.report.count({ where: reportWhere }),
+    ]);
+    return {
+      items: reports.map(({ blockers, ...report }) => ({
+        ...report,
+        entries: blockers.map(({ isKeyIssue, ...item }) => ({
+          ...item,
+          isKey: isKeyIssue,
+        })),
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  const [reports, total] = await prisma.$transaction([
+    prisma.report.findMany({
+      where: reportWhere,
+      select: {
+        id: true,
+        weekStartDate: true,
+        weekEndDate: true,
+        user: { select: { name: true } },
+        project: { select: { name: true } },
+        achievements: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            isKeyAchievement: true,
+          },
+          orderBy: { title: "asc" },
+        },
+      },
+      orderBy: [{ weekStartDate: "desc" }, { user: { name: "asc" } }],
+      skip,
+      take: limit,
+    }),
+    prisma.report.count({ where: reportWhere }),
+  ]);
+  return {
+    items: reports.map(({ achievements, ...report }) => ({
+      ...report,
+      entries: achievements.map(({ isKeyAchievement, ...item }) => ({
+        ...item,
+        isKey: isKeyAchievement,
+      })),
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
     },
-    orderBy: { user: { name: "asc" } },
-  });
+  };
 }
 
 export function recentActivity() {

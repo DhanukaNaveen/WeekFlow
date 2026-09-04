@@ -3,17 +3,26 @@ import { Bot, Send, Sparkles, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
 
+interface AssistantAnswer {
+  title: string;
+  scope: string;
+  summary: string;
+  items: Array<{ heading: string; details: string }>;
+  note: string | null;
+}
+
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
+  answer?: AssistantAnswer;
   detail?: string;
 }
 
 const examples = [
   "What did the team work on last week?",
-  "What are the main open blockers?",
-  "Who spent the most time on development?",
-  "Which reports still need review?",
+  "What are the main open blockers across all team members?",
+  "Across all report history, who spent the most time on development?",
+  "Which reports across the team currently need review?",
 ];
 
 export function AiAssistantPage() {
@@ -29,13 +38,33 @@ export function AiAssistantPage() {
     setMessage("");
     setSending(true);
     try {
-      const { data } = await api.post("/ai/chat", { message: question });
+      const history = messages.slice(-10).map(({ role, text }) => ({
+        role,
+        text,
+      }));
+      const { data } = await api.post("/ai/chat", {
+        message: question,
+        history,
+      });
+      const answer = data.answer as AssistantAnswer;
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          text: data.answer,
-          detail: `${data.reportCount} reports analyzed · ${data.model}`,
+          text: [
+            answer.title,
+            answer.scope,
+            answer.summary,
+            ...answer.items.map(
+              (answerItem) =>
+                `${answerItem.heading}: ${answerItem.details}`,
+            ),
+            answer.note,
+          ]
+            .filter(Boolean)
+            .join("\n"),
+          answer,
+          detail: `${data.reportCount} non-draft reports covered · ${data.model}`,
         },
       ]);
     } catch (error) {
@@ -103,7 +132,43 @@ export function AiAssistantPage() {
               <div
                 className={`max-w-[80%] rounded-xl p-4 text-sm ${item.role === "user" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
               >
-                <p className="whitespace-pre-wrap">{item.text}</p>
+                {item.answer ? (
+                  <div>
+                    <h2 className="font-semibold text-slate-900">
+                      {item.answer.title}
+                    </h2>
+                    <p className="mt-1 text-xs font-medium text-blue-700">
+                      {item.answer.scope}
+                    </p>
+                    <p className="mt-3 whitespace-pre-wrap">
+                      {item.answer.summary}
+                    </p>
+                    {!!item.answer.items.length && (
+                      <div className="mt-3 space-y-2">
+                        {item.answer.items.map((answerItem, answerIndex) => (
+                          <div
+                            className="rounded-lg border border-slate-200 bg-white p-3"
+                            key={`${answerItem.heading}-${answerIndex}`}
+                          >
+                            <p className="font-medium text-slate-900">
+                              {answerItem.heading}
+                            </p>
+                            <p className="mt-1 whitespace-pre-wrap text-slate-600">
+                              {answerItem.details}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {item.answer.note && (
+                      <p className="mt-3 text-xs text-amber-700">
+                        {item.answer.note}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap">{item.text}</p>
+                )}
                 {item.detail && (
                   <p className="mt-2 text-xs text-slate-400">{item.detail}</p>
                 )}
@@ -141,10 +206,6 @@ export function AiAssistantPage() {
           <Send size={17} /> Send
         </button>
       </form>
-      <p className="text-center text-xs text-slate-400">
-        Passwords, email addresses, links, and internal IDs are never sent to
-        Gemini.
-      </p>
     </div>
   );
 }

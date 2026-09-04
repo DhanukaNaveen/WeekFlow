@@ -1,33 +1,76 @@
 import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { Star } from "lucide-react";
 import { api, errorMessage } from "../../api/client";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
+import { formatWeekRange } from "../../utils/dates";
+
 export function SectionView() {
-  const [section, setSection] = useState("BLOCKERS"),
-    [week, setWeek] = useState(""),
+  const restored = useLocation().state?.sectionView;
+  const [section, setSection] = useState<"BLOCKERS" | "ACHIEVEMENTS">(
+      restored?.section ?? "BLOCKERS",
+    ),
+    [week, setWeek] = useState<string>(restored?.week ?? ""),
     [rows, setRows] = useState<any[]>(),
+    [page, setPage] = useState<number>(restored?.page ?? 1),
+    [pagination, setPagination] = useState({
+      page: 1,
+      limit: 10,
+      total: 0,
+      pages: 0,
+    }),
     [err, setErr] = useState("");
+
   useEffect(() => {
+    let active = true;
     setRows(undefined);
     setErr("");
     api
       .get("/dashboard/section-view", {
-        params: { section, week: week || undefined },
+        params: { section, week: week || undefined, page, limit: 10 },
       })
-      .then((r) => setRows(r.data))
-      .catch((e) => setErr(errorMessage(e)));
-  }, [section, week]);
+      .then((response) => {
+        if (!active) return;
+        setRows(response.data.items);
+        setPagination(response.data.pagination);
+      })
+      .catch((error) => {
+        if (active) setErr(errorMessage(error));
+      });
+    return () => {
+      active = false;
+    };
+  }, [section, week, page]);
+
+  function changeSection(value: "BLOCKERS" | "ACHIEVEMENTS") {
+    setPage(1);
+    setSection(value);
+  }
+
+  function changeWeek(value: string) {
+    setPage(1);
+    setWeek(value);
+  }
+
   return (
     <div className="space-y-5">
       <div>
         <h1 className="page-title">Cross-team section view</h1>
         <p className="text-slate-500">
-          Compare blockers or achievements side by side.
+          Review complete blocker and achievement details across the team.
         </p>
       </div>
       <div className="card flex flex-wrap gap-4">
         <label>
           Section
-          <select value={section} onChange={(e) => setSection(e.target.value)}>
+          <select
+            value={section}
+            onChange={(event) =>
+              changeSection(
+                event.target.value as "BLOCKERS" | "ACHIEVEMENTS",
+              )
+            }
+          >
             <option>BLOCKERS</option>
             <option>ACHIEVEMENTS</option>
           </select>
@@ -37,7 +80,7 @@ export function SectionView() {
           <input
             type="date"
             value={week}
-            onChange={(e) => setWeek(e.target.value)}
+            onChange={(event) => changeWeek(event.target.value)}
           />
         </label>
       </div>
@@ -50,40 +93,117 @@ export function SectionView() {
           message={`No ${section.toLowerCase()} were reported for this selection.`}
         />
       ) : (
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Team member</th>
-                <th>Project</th>
-                <th>Key item</th>
-                <th>Other items</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const items =
-                  section === "BLOCKERS" ? r.blockers : r.achievements;
-                const key = items.find(
-                  (x: any) => x.isKeyIssue || x.isKeyAchievement,
-                );
-                return (
-                  <tr key={r.id}>
-                    <td>{r.user.name}</td>
-                    <td>{r.project.name}</td>
-                    <td>{key?.title || "—"}</td>
-                    <td>
-                      {items
-                        .filter((x: any) => x !== key)
-                        .map((x: any) => x.title)
-                        .join(", ") || "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Team member</th>
+                  <th>Project</th>
+                  <th>Report week</th>
+                  <th>Title</th>
+                  <th>Description</th>
+                  {section === "BLOCKERS" && <th>Status</th>}
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.flatMap((report) =>
+                  report.entries.map((item: any, index: number) => (
+                    <tr key={item.id}>
+                      {index === 0 && (
+                        <>
+                          <td rowSpan={report.entries.length} className="align-top">
+                            {report.user.name}
+                          </td>
+                          <td rowSpan={report.entries.length} className="align-top">
+                            {report.project.name}
+                          </td>
+                          <td rowSpan={report.entries.length} className="align-top">
+                            {formatWeekRange(
+                              report.weekStartDate,
+                              report.weekEndDate,
+                            )}
+                          </td>
+                        </>
+                      )}
+                      <td className="font-medium">
+                        <span className="inline-flex items-center gap-2">
+                          {item.title}
+                          {item.isKey && (
+                            <Star
+                              aria-label="Key item"
+                              className="fill-amber-400 text-amber-500"
+                              size={17}
+                            />
+                          )}
+                        </span>
+                      </td>
+                      <td className="max-w-sm whitespace-pre-wrap">
+                        {item.description || "—"}
+                      </td>
+                      {section === "BLOCKERS" && (
+                        <td>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.status === "OPEN" ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700"}`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                      )}
+                      {index === 0 && (
+                        <td rowSpan={report.entries.length} className="align-top">
+                          <Link
+                            className="font-medium text-blue-600"
+                            to={`/reports/${report.id}`}
+                            state={{
+                              fromSectionView: {
+                                section,
+                                week,
+                                page,
+                              },
+                            }}
+                          >
+                            View report
+                          </Link>
+                        </td>
+                      )}
+                    </tr>
+                  )),
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-500">
+              Showing {(pagination.page - 1) * pagination.limit + 1}–
+              {Math.min(
+                pagination.page * pagination.limit,
+                pagination.total,
+              )}{" "}
+              of {pagination.total} reports
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                className="btn-secondary"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => current - 1)}
+              >
+                Previous
+              </button>
+              <span className="text-sm font-medium text-slate-600">
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <button
+                className="btn-secondary"
+                disabled={page >= pagination.pages}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

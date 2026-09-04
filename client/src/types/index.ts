@@ -10,6 +10,12 @@ export interface User {
   createdAt: string;
   statistics?: Record<string, number>;
   reports?: Report[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
 }
 export interface Project {
   id: string;

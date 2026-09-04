@@ -49,11 +49,26 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <Link
-        to={location.state?.fromDashboard ? "/" : "/reports"}
+        to={
+          location.state?.fromSectionView
+            ? "/section-view"
+            : location.state?.fromDashboard
+              ? "/"
+              : "/reports"
+        }
+        state={
+          location.state?.fromSectionView
+            ? { sectionView: location.state.fromSectionView }
+            : undefined
+        }
         className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
       >
         <ArrowLeft size={17} />
-        {location.state?.fromDashboard ? "Back to dashboard" : "Back to reports"}
+        {location.state?.fromSectionView
+          ? "Back to Section View"
+          : location.state?.fromDashboard
+            ? "Back to dashboard"
+            : "Back to reports"}
       </Link>
       <div className="flex flex-wrap justify-between gap-3">
         <div>

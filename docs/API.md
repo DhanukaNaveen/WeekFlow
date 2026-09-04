@@ -23,6 +23,6 @@ All protected calls use `Authorization: Bearer <JWT>`. List filters accept `page
 | GET          | `/api/dashboard/manager`           | Manager+           | Team analytics                            |
 | GET          | `/api/dashboard/section-view`      | Manager+           | Cross-team blockers/achievements          |
 | POST         | `/api/ai/chat`                     | Manager+           | Ask Gemini about submitted report context |
-| GET          | `/api/users/:id`                   | Manager+           | Profile, statistics, history              |
+| GET          | `/api/users/:id`                   | Manager+           | Profile, statistics, paginated history    |
 | PATCH        | `/api/users/:id/role`              | Admin              | Assign role                               |
 | PATCH        | `/api/users/:id/status`            | Admin              | Activate/deactivate                       |

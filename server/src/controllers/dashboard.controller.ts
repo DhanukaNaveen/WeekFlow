@@ -8,6 +8,8 @@ const sectionQuerySchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
 });
 
 export const member = async (req: Request, res: Response) =>
@@ -21,5 +23,12 @@ export const activity = async (_req: Request, res: Response) =>
 
 export const sections = async (req: Request, res: Response) => {
   const query = sectionQuerySchema.parse(req.query);
-  return res.json(await dashboard.sectionView(query.section, query.week));
+  return res.json(
+    await dashboard.sectionView(
+      query.section,
+      query.week,
+      query.page,
+      query.limit,
+    ),
+  );
 };

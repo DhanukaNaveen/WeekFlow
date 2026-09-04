@@ -15,47 +15,59 @@ export function listUsers() {
   return prisma.user.findMany({ select: publicUser, orderBy: { name: "asc" } });
 }
 
-export async function getUserProfile(id: string) {
+export async function getUserProfile(
+  id: string,
+  { page, limit }: { page: number; limit: number },
+) {
   const user = await prisma.user.findUnique({
     where: { id },
-    select: {
-      ...publicUser,
-      reports: {
-        where: { status: { not: "DRAFT" } },
-        include: {
-          project: true,
-          _count: {
-            select: { tasks: { where: { status: "COMPLETED" } } },
-          },
-          blockers: true,
-          reviews: {
-            where: { action: "CHANGES_REQUESTED" },
-            select: { id: true },
-          },
-        },
-        orderBy: { weekStartDate: "desc" },
-      },
-    },
+    select: publicUser,
   });
   if (!user) throw new AppError(404, "User not found");
 
-  const reports = user.reports;
+  const reportWhere = { userId: id, status: { not: "DRAFT" as const } };
+  const [reports, total, approved, corrections, openBlockers] =
+    await prisma.$transaction([
+      prisma.report.findMany({
+        where: reportWhere,
+        select: {
+          id: true,
+          weekStartDate: true,
+          weekEndDate: true,
+          status: true,
+          project: true,
+        },
+        orderBy: { weekStartDate: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.report.count({ where: reportWhere }),
+      prisma.report.count({ where: { ...reportWhere, status: "APPROVED" } }),
+      prisma.review.count({
+        where: {
+          action: "CHANGES_REQUESTED",
+          report: reportWhere,
+        },
+      }),
+      prisma.blocker.count({
+        where: { status: "OPEN", report: reportWhere },
+      }),
+    ]);
+
   return {
     ...user,
+    reports,
     statistics: {
-      total: reports.length,
-      approved: reports.filter((report) => report.status === "APPROVED").length,
-      corrections: reports.reduce(
-        (total, report) => total + report.reviews.length,
-        0,
-      ),
-      averageCompletedTasks: reports.length
-        ? reports.reduce((total, report) => total + report._count.tasks, 0) /
-          reports.length
-        : 0,
-      openBlockers: reports
-        .flatMap((report) => report.blockers)
-        .filter((blocker) => blocker.status === "OPEN").length,
+      total,
+      approved,
+      corrections,
+      openBlockers,
+    },
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.max(1, Math.ceil(total / limit)),
     },
   };
 }

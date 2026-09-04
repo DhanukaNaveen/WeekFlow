@@ -103,7 +103,7 @@ GEMINI_API_KEY="your-key"
 GEMINI_MODEL="gemini-3.1-flash-lite"
 ```
 
-The server retrieves recent non-draft reports, removes emails, passwords, links, and database identifiers, and sends only the work context needed to answer the manager's question. The system prompt treats report content as untrusted data, requires answers grounded in the supplied context, and uses a low temperature for stable summaries. The key is never exposed to the React application. Free-tier Gemini data handling may differ from paid-tier handling, so production deployments should review Google's current terms and privacy controls.
+The server recognizes the four suggested questions and returns verified structured answers directly from deterministic database queries: explicit previous-week reports, all-history work-hour totals, currently open blockers, or valid current/past reports whose current status is `SUBMITTED`. Other questions use Gemini with compact all-history aggregates plus up to 60 recent non-draft reports. Emails, passwords, links, database identifiers, drafts, and future reporting weeks are excluded. The system prompt treats report content as untrusted data, requires grounded answers with an explicit time/team scope, and uses a low temperature. Up to 10 recent chat messages provide follow-up context. Gemini must return the same fixed JSON answer shape, which the server validates with Zod before the UI renders it. The Gemini key remains server-side. Free-tier data handling may differ from paid-tier handling, so production deployments should review Google's current terms and privacy controls.
 
 ## Screenshots
 

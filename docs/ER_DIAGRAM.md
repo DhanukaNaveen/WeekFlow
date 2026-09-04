@@ -4,7 +4,9 @@
 erDiagram
  USER ||--o{ REPORT : authors
  USER ||--o{ REVIEW : performs
+ USER ||--o{ PROJECT_ASSIGNMENT : receives
  PROJECT ||--o{ REPORT : categorizes
+ PROJECT ||--o{ PROJECT_ASSIGNMENT : includes
  REPORT ||--o{ REPORT_TASK : contains
  REPORT ||--o{ NEXT_WEEK_TASK : plans
  REPORT ||--o{ BLOCKER : identifies
@@ -15,6 +17,7 @@ erDiagram
  REPORT_VERSION ||--o{ REVIEW : reviewed_as
  USER { string id string email Role role boolean isActive }
  PROJECT { string id string name boolean isActive }
+ PROJECT_ASSIGNMENT { string userId string projectId datetime assignedAt }
  REPORT { string id date weekStartDate date weekEndDate ReportStatus status }
  REPORT_TASK { string id string name Priority priority int actualPercentage TaskStatus status }
  NEXT_WEEK_TASK { string id string name Priority priority }

@@ -24,6 +24,8 @@ The manager dashboard service reads related team report data once and returns a 
 
 Relational child sections cascade when a report is removed; projects referenced by reports are deactivated instead of deleted. A unique key prevents duplicate user/project/week reports. ISO date-only week boundaries are stored as PostgreSQL `DATE`; timestamps remain UTC and the UI localizes them for display.
 
+`ProjectAssignment` provides an explicit many-to-many relation between team members and projects. Managers/admins replace a project's assignments through one validated endpoint. Members list only active assigned projects, and report creation plus draft project changes repeat that authorization check on the server. Unassignment preserves historical reports and does not block resubmitting an existing correction under its original project.
+
 ## AI manager assistant
 
 The manager-only `/api/ai/chat` endpoint uses a hybrid query design. Four sample intents return complete, structured answers directly from deterministic database queries: previous-week activity, Development-hour totals, open blockers, and submitted reports awaiting review. Free-form questions retrieve up to 60 recent non-draft reports plus compact all-history aggregates before calling Gemini. Context contains only names, projects, week dates, workflow status, and relevant work content. Password hashes, emails, links, database IDs, drafts, and future reporting weeks are excluded. Up to 10 validated chat messages support contextual follow-up questions. Report text is explicitly treated as untrusted data in the system instruction.

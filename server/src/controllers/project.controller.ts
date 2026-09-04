@@ -1,9 +1,12 @@
 import type { Request, Response } from "express";
 import * as projects from "../services/project.service.js";
-import { projectSchema } from "../validators/schemas.js";
+import {
+  projectMembersSchema,
+  projectSchema,
+} from "../validators/schemas.js";
 
 export const list = async (req: Request, res: Response) =>
-  res.json(await projects.listProjects(req.user!.role));
+  res.json(await projects.listProjects(req.user!.role, req.user!.userId));
 
 export const create = async (req: Request, res: Response) =>
   res
@@ -21,4 +24,11 @@ export const update = async (req: Request, res: Response) =>
 export const remove = async (req: Request, res: Response) => {
   const project = await projects.removeProject(String(req.params.id));
   return project ? res.json(project) : res.status(204).send();
+};
+
+export const assignMembers = async (req: Request, res: Response) => {
+  const { memberIds } = projectMembersSchema.parse(req.body);
+  return res.json(
+    await projects.assignProjectMembers(String(req.params.id), memberIds),
+  );
 };

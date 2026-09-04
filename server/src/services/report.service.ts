@@ -47,11 +47,21 @@ const children = (input: ReportInput) => ({
   workHours: { create: input.workHours },
 });
 
-export async function createReport(userId: string, input: ReportInput) {
-  const project = await prisma.project.findUnique({
-    where: { id: input.projectId },
+async function requireAssignedActiveProject(userId: string, projectId: string) {
+  const project = await prisma.project.findFirst({
+    where: {
+      id: projectId,
+      isActive: true,
+      memberAssignments: { some: { userId } },
+    },
+    select: { id: true },
   });
-  if (!project?.isActive) throw new AppError(400, "Select an active project");
+  if (!project)
+    throw new AppError(400, "Select an assigned active project");
+}
+
+export async function createReport(userId: string, input: ReportInput) {
+  await requireAssignedActiveProject(userId, input.projectId);
   return prisma.report.create({
     data: {
       userId,
@@ -76,11 +86,8 @@ export async function updateReport(
     throw new AppError(403, "You can only edit your own reports");
   if (!["DRAFT", "NEEDS_CORRECTION"].includes(report.status))
     throw new AppError(409, "This report is read-only in its current status");
-  const project = await prisma.project.findUnique({
-    where: { id: input.projectId },
-    select: { isActive: true },
-  });
-  if (!project?.isActive) throw new AppError(400, "Select an active project");
+  if (report.status === "DRAFT" || input.projectId !== report.projectId)
+    await requireAssignedActiveProject(userId, input.projectId);
   return prisma.$transaction(async (tx) => {
     await Promise.all([
       tx.reportTask.deleteMany({ where: { reportId: id } }),
@@ -138,6 +145,8 @@ export async function submitReport(userId: string, id: string) {
     throw new AppError(403, "You can only submit your own reports");
   if (!["DRAFT", "NEEDS_CORRECTION"].includes(report.status))
     throw new AppError(409, "Only draft or corrected reports can be submitted");
+  if (report.status === "DRAFT")
+    await requireAssignedActiveProject(userId, report.projectId);
   if (!report.tasks.length)
     throw new AppError(400, "At least one completed-task entry is required");
   return prisma.$transaction(async (tx) => {

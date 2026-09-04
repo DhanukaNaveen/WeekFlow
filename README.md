@@ -9,7 +9,7 @@ WeekFlow is a production-oriented full-stack application for creating structured
 - Atomic report snapshot creation on every submission and version-linked review history
 - Member dashboard/history, dynamic report form, correction feedback, and read-only submitted reports
 - Manager filtering, review page, team profiles, cross-team blocker/achievement view, and five data-driven charts
-- Project soft-deactivation and admin user role/status management
+- Project soft-deactivation, member assignments, and admin user role/status management
 - Optional manager-only Gemini assistant grounded in privacy-filtered report data
 - Zod validation, centralized errors, Helmet/CORS, ownership checks, and Supertest RBAC coverage
 
@@ -93,6 +93,8 @@ All seeded accounts use `Password123!` (development only): `admin@example.com`, 
 The bearer JWT contains only `userId` and `role`. `authenticate` verifies it; `authorizeRoles` gates role-only endpoints. Report services additionally enforce object ownership, so changing an ID cannot expose another member's report. Managers can alter only review state/comments and never report content.
 
 Every submit/resubmit transaction writes an immutable JSON snapshot with the next version number and changes the status to `SUBMITTED`. Every review transaction creates a review linked to that exact version, changes status, and writes an activity entry. Requesting changes requires a comment.
+
+Managers and admins assign team members to projects. Members receive only their active assigned projects and the server rejects new drafts for unassigned projects. Removing an assignment never deletes historical reports; a correction-required report can still be completed under its original project.
 
 ## AI assistant setup and privacy
 

@@ -22,8 +22,8 @@ Audited against the 48 numbered sections in the original assignment. Statuses re
 | 16 | Dedicated manager review page | PASS | Full read-only report, current/previous versions, timeline, approve, and comment-required request-changes actions update immediately. |
 | 17 | Review history | PASS | Reviewer, action, comment, version number, and timestamp are displayed. |
 | 18 | Cross-team section view | PASS | Manager can select week and compare key/other blockers or achievements by member and project. |
-| 19 | Project/category management | PASS | List/add/inline edit/activate/deactivate/delete UI and API; referenced projects are soft-deactivated. |
-| 20 | Team member profile | PASS | Identity, total/approved reports, historical correction count, average completed tasks, open blockers, and report history. |
+| 19 | Project/category management | PASS | List/add/inline edit/activate/deactivate/delete UI and API, explicit member assignments, member-scoped active project choices, and server authorization; referenced projects are soft-deactivated. |
+| 20 | Team member profile | PASS | Identity, assigned projects, total/approved reports, historical correction count, open blockers, and paginated report history. |
 | 21 | Admin user management | PASS | User table, roles, status, dates, role changes, activation/deactivation, and self-access safeguards. |
 | 22 | REST API structure | PASS | All suggested auth/user/project/report/review/dashboard endpoints and the optional AI endpoint are documented and connected. |
 | 23 | Backend architecture | PASS | Routes delegate HTTP handling to controllers, business rules to services, and persistence to Prisma; centralized async/error middleware is used. |
@@ -31,8 +31,8 @@ Audited against the 48 numbered sections in the original assignment. Statuses re
 | 25 | Frontend architecture | PASS | API, context, layouts, routes, pages, common/report components, types, and date utilities are separated and reusable. |
 | 26 | UI/UX | PASS | Responsive role-aware sidebar/header, cards, tables, badges, loading/error/empty states, confirmations, disabled states, and toasts. |
 | 27 | Axios API client | PASS | One base client attaches JWTs and handles 401 session expiry globally. |
-| 28 | Seed data | PASS | Admin, manager, four members, four projects, multiple weeks/statuses, tasks/hours/blockers/achievements/reviews/versions/activity, and documented password. |
-| 29 | Automated testing | PASS | Twelve Supertest/Vitest tests cover unauthenticated access, ownership, manager access, manager-route denial, active/current roles, transitions, valid empty and invalid filters, comments, and AI RBAC. |
+| 28 | Seed data | PASS | Admin, manager, four members, four projects with assignments, multiple weeks/statuses, tasks/hours/blockers/achievements/reviews/versions/activity, and documented password. |
+| 29 | Automated testing | PASS | Fifteen Supertest/Vitest tests cover unauthenticated access, ownership, manager access, manager-route denial, project-assignment authorization and replacement, active/current roles, transitions, valid empty and invalid filters, comments, and AI RBAC. |
 | 30 | Security | PASS | bcrypt, JWT validation, current database role/active checks, RBAC, object authorization, Zod, CORS, Helmet, safe user selects, ignored secrets, and env examples. |
 | 31 | AI manager assistant | PASS | Optional manager-only Gemini service/UI uses database retrieval, privacy minimization, grounding instructions, graceful configuration/timeouts, and documentation. |
 | 32 | ER diagram | PASS | Mermaid source includes every required entity and its important relationships. |

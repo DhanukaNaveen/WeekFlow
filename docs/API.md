@@ -10,6 +10,7 @@ All protected calls use `Authorization: Bearer <JWT>`. List filters accept `page
 | POST         | `/api/auth/logout`                 | Authenticated      | Client-token logout acknowledgement       |
 | GET/POST     | `/api/projects`                    | Auth / Manager+    | List/create projects                      |
 | PATCH/DELETE | `/api/projects/:id`                | Manager+           | Edit or safely deactivate/delete          |
+| PUT          | `/api/projects/:id/members`        | Manager+           | Replace assigned team members              |
 | POST         | `/api/reports`                     | Member             | Create own draft                          |
 | GET          | `/api/reports/my`                  | Member             | Paginated own history                     |
 | GET          | `/api/reports`                     | Manager+           | Filter team reports                       |

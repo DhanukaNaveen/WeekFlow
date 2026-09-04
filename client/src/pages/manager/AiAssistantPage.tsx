@@ -20,8 +20,8 @@ interface ChatMessage {
 
 const examples = [
   "What did the team work on last week?",
+  "Generate a team summary highlighting completed work, recurring blockers, and workload imbalances.",
   "What are the main open blockers across all team members?",
-  "Across all report history, who spent the most time on development?",
   "Which reports across the team currently need review?",
 ];
 
@@ -90,8 +90,7 @@ export function AiAssistantPage() {
           Ask questions grounded in submitted WeekFlow reports.
         </p>
       </div>
-      {!messages.length && (
-        <div className="card">
+      <div className="card">
           <div className="mb-4 flex items-center gap-3">
             <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
               <Bot />
@@ -108,6 +107,7 @@ export function AiAssistantPage() {
             {examples.map((example) => (
               <button
                 className="rounded-lg border p-3 text-left text-sm hover:border-blue-300 hover:bg-blue-50"
+                disabled={sending}
                 key={example}
                 onClick={() => setMessage(example)}
               >
@@ -116,7 +116,6 @@ export function AiAssistantPage() {
             ))}
           </div>
         </div>
-      )}
       {!!messages.length && (
         <div className="card max-h-[55vh] space-y-4 overflow-y-auto">
           {messages.map((item, index) => (

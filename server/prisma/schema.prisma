@@ -51,6 +51,7 @@ model User {
   role Role @default(TEAM_MEMBER)
   isActive Boolean @default(true)
   reports Report[]
+  projectAssignments ProjectAssignment[]
   reviews Review[] @relation("Reviewer")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -62,8 +63,20 @@ model Project {
   description String?
   isActive Boolean @default(true)
   reports Report[]
+  memberAssignments ProjectAssignment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProjectAssignment {
+  userId String
+  projectId String
+  assignedAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
 }
 
 model Report {

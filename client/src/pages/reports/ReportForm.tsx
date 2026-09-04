@@ -41,15 +41,15 @@ export function ReportForm() {
     [err, setErr] = useState(""),
     [validationErrors, setValidationErrors] = useState<string[]>([]);
   useEffect(() => {
-    api
-      .get("/projects")
-      .then((r) => setProjects(r.data))
-      .catch((error) => setErr(errorMessage(error)));
-    if (id)
-      api
-        .get(`/reports/${id}`)
-        .then((r) => {
-          const d = r.data;
+    async function loadForm() {
+      try {
+        const [projectResponse, reportResponse] = await Promise.all([
+          api.get("/projects"),
+          id ? api.get(`/reports/${id}`) : Promise.resolve(null),
+        ]);
+        const availableProjects: Project[] = projectResponse.data;
+        if (reportResponse) {
+          const d = reportResponse.data;
           if (!["DRAFT", "NEEDS_CORRECTION"].includes(d.status)) {
             toast.error("This report is read-only in its current status.");
             nav(`/reports/${id}`, { replace: true });
@@ -61,9 +61,20 @@ export function ReportForm() {
             weekEndDate: d.weekEndDate.slice(0, 10),
             links: d.links,
           });
-        })
-        .catch((e) => setErr(errorMessage(e)))
-        .finally(() => setLoading(false));
+          if (!availableProjects.some((project) => project.id === d.project.id))
+            availableProjects.push({
+              ...d.project,
+              name: `${d.project.name} (current report)`,
+            });
+        }
+        setProjects(availableProjects);
+      } catch (error) {
+        setErr(errorMessage(error));
+      } finally {
+        setLoading(false);
+      }
+    }
+    void loadForm();
   }, [id, nav]);
   const set = (k: string, v: any) => setData((d: any) => ({ ...d, [k]: v }));
   const selectWeekStart = (value: string) => {
@@ -259,6 +270,11 @@ export function ReportForm() {
               </option>
             ))}
           </select>
+          {!id && !projects.length && (
+            <span className="mt-1 block text-xs text-amber-700">
+              No active projects are assigned to you.
+            </span>
+          )}
         </label>
         <span />
         <label>

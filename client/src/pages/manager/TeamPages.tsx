@@ -80,6 +80,24 @@ export function TeamProfile() {
           </div>
         ))}
       </div>
+      <section className="card">
+        <h2 className="font-semibold">Assigned projects</h2>
+        {!u.assignedProjects?.length ? (
+          <p className="mt-3 text-sm text-slate-500">No projects assigned.</p>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {u.assignedProjects.map((project) => (
+              <span
+                className={`rounded-full px-3 py-1.5 text-sm ${project.isActive ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500"}`}
+                key={project.id}
+              >
+                {project.name}
+                {!project.isActive ? " (Inactive)" : ""}
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
       {!u.reports?.length ? (
         <Empty message="This team member has no report history yet." />
       ) : (

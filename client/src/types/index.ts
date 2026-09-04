@@ -10,6 +10,7 @@ export interface User {
   createdAt: string;
   statistics?: Record<string, number>;
   reports?: Report[];
+  assignedProjects?: Project[];
   pagination?: {
     page: number;
     limit: number;
@@ -22,6 +23,9 @@ export interface Project {
   name: string;
   description?: string;
   isActive: boolean;
+  assignedMembers?: Array<
+    Pick<User, "id" | "name" | "email" | "isActive">
+  >;
 }
 export interface Report {
   id: string;

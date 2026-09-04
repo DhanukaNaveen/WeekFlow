@@ -26,7 +26,14 @@ export async function getUserProfile(
   if (!user) throw new AppError(404, "User not found");
 
   const reportWhere = { userId: id, status: { not: "DRAFT" as const } };
-  const [reports, total, approved, corrections, openBlockers] =
+  const [
+    reports,
+    total,
+    approved,
+    corrections,
+    openBlockers,
+    assignedProjects,
+  ] =
     await prisma.$transaction([
       prisma.report.findMany({
         where: reportWhere,
@@ -52,11 +59,16 @@ export async function getUserProfile(
       prisma.blocker.count({
         where: { status: "OPEN", report: reportWhere },
       }),
+      prisma.project.findMany({
+        where: { memberAssignments: { some: { userId: id } } },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
   return {
     ...user,
     reports,
+    assignedProjects,
     statistics: {
       total,
       approved,
@@ -72,13 +84,17 @@ export async function getUserProfile(
   };
 }
 
-export function changeRole(actorId: string, userId: string, role: Role) {
+export async function changeRole(actorId: string, userId: string, role: Role) {
   if (actorId === userId)
     throw new AppError(400, "You cannot change your own role");
-  return prisma.user.update({
-    where: { id: userId },
-    data: { role },
-    select: publicUser,
+  return prisma.$transaction(async (tx) => {
+    if (role !== "TEAM_MEMBER")
+      await tx.projectAssignment.deleteMany({ where: { userId } });
+    return tx.user.update({
+      where: { id: userId },
+      data: { role },
+      select: publicUser,
+    });
   });
 }
 

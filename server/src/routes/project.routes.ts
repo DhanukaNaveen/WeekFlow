@@ -10,6 +10,11 @@ projectRouter.post(
   authorizeRoles("MANAGER", "ADMIN"),
   asyncHandler(projects.create),
 );
+projectRouter.put(
+  "/:id/members",
+  authorizeRoles("MANAGER", "ADMIN"),
+  asyncHandler(projects.assignMembers),
+);
 projectRouter.patch(
   "/:id",
   authorizeRoles("MANAGER", "ADMIN"),

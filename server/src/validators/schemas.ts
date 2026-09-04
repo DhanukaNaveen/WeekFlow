@@ -97,6 +97,12 @@ export const projectSchema = z.object({
   description: z.string().optional().nullable(),
   isActive: z.boolean().optional(),
 });
+export const projectMembersSchema = z.object({
+  memberIds: z
+    .array(z.string().min(1))
+    .max(500)
+    .transform((ids) => [...new Set(ids)]),
+});
 export const correctionSchema = z.object({
   comment: z
     .string()

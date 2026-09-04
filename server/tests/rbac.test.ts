@@ -7,6 +7,11 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
   transaction: vi.fn(),
   userFindUnique: vi.fn(),
+  userFindMany: vi.fn(),
+  projectFindFirst: vi.fn(),
+  projectFindUnique: vi.fn(),
+  assignmentDeleteMany: vi.fn(),
+  assignmentCreateMany: vi.fn(),
 }));
 const askAi = vi.hoisted(() => vi.fn());
 vi.mock("../src/config/prisma.js", () => ({
@@ -16,7 +21,18 @@ vi.mock("../src/config/prisma.js", () => ({
       findMany: mocks.findMany,
       count: mocks.count,
     },
-    user: { findUnique: mocks.userFindUnique },
+    user: {
+      findUnique: mocks.userFindUnique,
+      findMany: mocks.userFindMany,
+    },
+    project: {
+      findFirst: mocks.projectFindFirst,
+      findUnique: mocks.projectFindUnique,
+    },
+    projectAssignment: {
+      deleteMany: mocks.assignmentDeleteMany,
+      createMany: mocks.assignmentCreateMany,
+    },
     $transaction: mocks.transaction,
   },
 }));
@@ -76,6 +92,40 @@ describe("API authorization", () => {
       .get("/api/reports")
       .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`);
     expect(r.status).toBe(403);
+  });
+  it("prevents a member from managing project assignments", async () => {
+    const response = await request(app)
+      .put("/api/projects/project-a/members")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({ memberIds: ["member-a"] });
+    expect(response.status).toBe(403);
+  });
+  it("allows a manager to replace project assignments", async () => {
+    mocks.projectFindUnique
+      .mockResolvedValueOnce({ id: "project-a" })
+      .mockResolvedValueOnce({ id: "project-a", memberAssignments: [] });
+    mocks.userFindMany.mockResolvedValue([{ id: "member-a" }]);
+    mocks.transaction.mockResolvedValue([]);
+    const response = await request(app)
+      .put("/api/projects/project-a/members")
+      .set("Authorization", `Bearer ${token("manager", "MANAGER")}`)
+      .send({ memberIds: ["member-a"] });
+    expect(response.status).toBe(200);
+    expect(mocks.assignmentDeleteMany).toHaveBeenCalled();
+    expect(mocks.assignmentCreateMany).toHaveBeenCalled();
+  });
+  it("rejects report creation for an unassigned project", async () => {
+    mocks.projectFindFirst.mockResolvedValue(null);
+    const response = await request(app)
+      .post("/api/reports")
+      .set("Authorization", `Bearer ${token("member-a", "TEAM_MEMBER")}`)
+      .send({
+        projectId: "project-a",
+        weekStartDate: "2026-08-31",
+        weekEndDate: "2026-09-06",
+      });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Select an assigned active project");
   });
   it("uses the current database role instead of a stale JWT role", async () => {
     const response = await request(app)

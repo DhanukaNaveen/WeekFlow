@@ -25,7 +25,7 @@ WeekFlow is a production-oriented full-stack application for creating structured
 
 ## Stack and architecture
 
-React 19, TypeScript, Vite, Tailwind CSS, React Router, Axios, Recharts, React Hot Toast; Node.js, Express 5, TypeScript, Zod, JWT, bcrypt; PostgreSQL and Prisma ORM; Vitest and Supertest. See [architecture](docs/ARCHITECTURE.md), [API](docs/API.md), and the [ER diagram](docs/ER_DIAGRAM.md).
+React 19, TypeScript, Vite, Tailwind CSS, React Router, Axios, Recharts, React Hot Toast; Node.js, Express 5, TypeScript, Zod, JWT, bcrypt; PostgreSQL and Prisma ORM; Vitest and Supertest. See [architecture](docs/ARCHITECTURE.md), [API](docs/API.md), and the [ER diagram](docs/ER_DIAGRAM_CHEN.md).
 
 ```text
 client/src  → pages, reusable components, auth context, Axios client

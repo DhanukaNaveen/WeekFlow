@@ -1,3 +1,4 @@
+import "dotenv/config";
 import {
   BlockerStatus,
   Prisma,
@@ -509,6 +510,15 @@ function reviewComment(projectName: string, round: number) {
 }
 
 async function main() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to reset demo data while NODE_ENV=production.");
+  }
+  if (process.env.ALLOW_DEMO_RESET?.trim().toLowerCase() !== "true") {
+    throw new Error(
+      "Demo reset blocked. Set ALLOW_DEMO_RESET=true only after confirming the configured database is disposable.",
+    );
+  }
+
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
   const currentMonday = mondayFor();
   const now = new Date();
@@ -797,7 +807,7 @@ async function main() {
     (report) => report.versions === 3,
   );
 
-  console.log("Seeded the WeekFlow presentation dataset.");
+  console.log("Seeded the WeekFlow demo dataset.");
   console.log(
     JSON.stringify(
       {

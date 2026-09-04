@@ -42,8 +42,8 @@ function Shell({
 export function Login() {
   const { login } = useAuth(),
     nav = useNavigate();
-  const [e, setE] = useState("manager@example.com"),
-    [p, setP] = useState("Password123!"),
+  const [e, setE] = useState(""),
+    [p, setP] = useState(""),
     [busy, setBusy] = useState(false);
   async function go(x: FormEvent) {
     x.preventDefault();

@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import type { Project, User } from "../../types";
+import { FolderKanban, Plus, UserPlus } from "lucide-react";
+import { Modal, PageHeader } from "../../components/common/Ui";
 export function ProjectsPage() {
   const [p, setP] = useState<Project[]>(),
     [members, setMembers] = useState<User[]>([]),
@@ -128,28 +130,25 @@ export function ProjectsPage() {
   if (err) return <ErrorBox message={err} />;
   if (!p) return <Loading />;
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="page-title">Projects</h1>
-        <p className="text-slate-500">Manage reporting categories safely.</p>
-      </div>
-      <div className="card grid gap-3 md:grid-cols-[1fr_2fr_auto]">
-        <input
+    <div className="space-y-6">
+      <PageHeader icon={FolderKanban} title="Projects" description="Create projects, manage availability, and assign team members." />
+      <div className="card grid gap-4 md:grid-cols-[1fr_2fr_auto] md:items-end">
+        <label>Project name<input
           placeholder="Project name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-        />
-        <input
+        /></label>
+        <label>Description<input
           placeholder="Description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-        />
+        /></label>
         <button
           disabled={name.trim().length < 2}
           className="btn-primary"
           onClick={add}
         >
-          Add project
+          <Plus size={17} />Add project
         </button>
       </div>
       {!p.length ? (
@@ -191,7 +190,7 @@ export function ProjectsPage() {
                       x.description || "—"
                     )}
                   </td>
-                  <td>{x.isActive ? "Active" : "Inactive"}</td>
+                  <td><span className={`status-pill ${x.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{x.isActive ? "Active" : "Inactive"}</span></td>
                   <td>
                     {x.assignedMembers?.length ? (
                       <div className="flex flex-wrap gap-1.5">
@@ -233,7 +232,7 @@ export function ProjectsPage() {
                           className="font-medium text-blue-600"
                           onClick={() => beginAssign(x)}
                         >
-                          Assign members
+                          <span className="inline-flex items-center gap-1"><UserPlus size={15} />Assign members</span>
                         </button>
                         <button
                           className="font-medium text-blue-600"
@@ -264,26 +263,14 @@ export function ProjectsPage() {
         </div>
       )}
       {assigningProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-          <div
-            aria-labelledby="assign-members-title"
-            aria-modal="true"
-            className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"
-            role="dialog"
-          >
-            <h2 className="text-lg font-semibold" id="assign-members-title">
-              Assign members to {assigningProject.name}
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Selected members can use this project for new reports.
-            </p>
-            <div className="mt-5 max-h-80 space-y-2 overflow-y-auto">
+        <Modal title={`Assign members to ${assigningProject.name}`} description="Selected members can use this project for new reports." onClose={() => setAssigningProject(null)} footer={<><button className="btn-secondary" disabled={savingId === assigningProject.id} onClick={() => setAssigningProject(null)}>Cancel</button><button className="btn-primary" disabled={savingId === assigningProject.id} onClick={() => void saveAssignments()}>Save assignments</button></>}>
+            <div className="space-y-2">
               {!members.length ? (
                 <Empty message="No team members are available." />
               ) : (
                 members.map((member) => (
                   <label
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-3"
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition ${selectedMemberIds.includes(member.id) ? "border-blue-300 bg-blue-50" : "border-slate-200 hover:bg-slate-50"}`}
                     key={member.id}
                   >
                     <input
@@ -302,24 +289,7 @@ export function ProjectsPage() {
                 ))
               )}
             </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                className="btn-secondary"
-                disabled={savingId === assigningProject.id}
-                onClick={() => setAssigningProject(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-primary"
-                disabled={savingId === assigningProject.id}
-                onClick={() => void saveAssignments()}
-              >
-                Save assignments
-              </button>
-            </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

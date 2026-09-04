@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Layers3, Star } from "lucide-react";
 import { api, errorMessage } from "../../api/client";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { formatWeekRange } from "../../utils/dates";
+import { PageHeader } from "../../components/common/Ui";
 
 export function SectionView() {
   const restored = useLocation().state?.sectionView;
@@ -53,14 +54,9 @@ export function SectionView() {
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="page-title">Cross-team section view</h1>
-        <p className="text-slate-500">
-          Review complete blocker and achievement details across the team.
-        </p>
-      </div>
-      <div className="card flex flex-wrap gap-4">
+    <div className="space-y-6">
+      <PageHeader icon={Layers3} title="Cross-team section view" description="Review complete blocker and achievement details across the team." />
+      <div className="card grid gap-4 sm:grid-cols-2 lg:max-w-2xl">
         <label>
           Section
           <select

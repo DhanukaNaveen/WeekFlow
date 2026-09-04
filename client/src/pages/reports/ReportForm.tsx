@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Link2, Plus, Send, Trash2 } from "lucide-react";
 import { api, errorMessage } from "../../api/client";
 import { ErrorBox, Loading } from "../../components/common/States";
 import type { Project } from "../../types";
 import { addDateDays, currentWeekStart } from "../../utils/dates";
+import { PageHeader } from "../../components/common/Ui";
 const weekStart = currentWeekStart();
 const currentWeekEnd = addDateDays(weekStart, 6);
 const blank = {
@@ -231,14 +232,15 @@ export function ReportForm() {
           Back to report
         </Link>
       )}
-      <div>
-        <h1 className="page-title">
+      <div className="hidden">
+        <h1>
           {id ? "Update weekly report" : "Create weekly report"}
         </h1>
-        <p className="text-slate-500">
+        <p>
           All fields follow the team’s standard weekly format.
         </p>
       </div>
+      <PageHeader icon={FileText} title={id ? "Update weekly report" : "Create weekly report"} description="Capture your work, outcomes, blockers, and time for the selected week." />
       {feedback && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
           <b>Changes requested:</b> {feedback}
@@ -497,8 +499,8 @@ export function ReportForm() {
           </>
         )}
       </Rows>
-      <section className="card space-y-4">
-        <h2 className="section-title">Notes / links</h2>
+      <section className="card space-y-5">
+        <div><h2 className="section-title">Notes and links</h2><p className="mt-1 text-sm text-slate-500">Add context or references that help reviewers understand the work.</p></div>
         <label>
           Notes
           <textarea
@@ -514,12 +516,12 @@ export function ReportForm() {
               className="btn-secondary"
               onClick={() => set("links", [...data.links, ""])}
             >
-              + Add link
+              <Link2 size={16} /> Add link
             </button>
           </div>
           <div className="space-y-2">
             {data.links.map((link: string, index: number) => (
-              <div className="flex items-center gap-2" key={index}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center" key={index}>
                 <input
                   aria-label={`Reference URL ${index + 1}`}
                   type="url"
@@ -535,7 +537,7 @@ export function ReportForm() {
                   }
                 />
                 <button
-                  className="text-sm font-medium text-red-600"
+                  className="btn-ghost shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={() =>
                     set(
                       "links",
@@ -545,14 +547,14 @@ export function ReportForm() {
                     )
                   }
                 >
-                  Remove
+                  <Trash2 size={16} /> Remove
                 </button>
               </div>
             ))}
           </div>
         </div>
       </section>
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col-reverse justify-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row">
         {data.status !== "NEEDS_CORRECTION" && (
           <button
             disabled={saving}
@@ -567,7 +569,7 @@ export function ReportForm() {
           className="btn-primary"
           onClick={() => save(true)}
         >
-          Submit report
+          <Send size={17} /> Submit report
         </button>
       </div>
     </div>
@@ -588,24 +590,25 @@ function Rows({
 }) {
   return (
     <section className="card">
-      <div className="mb-4 flex justify-between">
-        <h2 className="section-title">{title}</h2>
-        <button className="btn-secondary" onClick={add}>
-          + Add
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div><h2 className="section-title">{title}</h2><p className="mt-1 text-sm text-slate-500">Add only the entries that apply to this report.</p></div>
+        <button className="btn-secondary shrink-0" onClick={add} type="button">
+          <Plus size={16} /> Add
         </button>
       </div>
       <div className="space-y-4">
         {items.map((x, i) => (
           <div
             key={i}
-            className="relative grid gap-3 rounded-xl border bg-slate-50 p-4 md:grid-cols-2 xl:grid-cols-4"
+            className="relative grid gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4 pt-12 md:grid-cols-2 xl:grid-cols-4"
           >
             {children(x, i)}
             <button
-              className="absolute right-2 top-2 text-xs text-red-600"
+              className="btn-ghost absolute right-2 top-2 min-h-0 px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50"
               onClick={() => remove(i)}
+              type="button"
             >
-              Remove
+              <Trash2 size={14} /> Remove
             </button>
           </div>
         ))}
@@ -678,7 +681,7 @@ const Check = ({
   value: boolean;
   onChange: (v: boolean) => void;
 }) => (
-  <label className="mt-6 flex items-center gap-2">
+  <label className={`mt-6 flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 transition ${value ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
     <input
       className="mt-0 h-4 w-4"
       type="checkbox"

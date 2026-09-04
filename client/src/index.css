@@ -2,50 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 @layer base {
+  html,
+  body,
+  #root {
+    @apply min-h-full;
+  }
   body {
-    @apply bg-slate-50 text-slate-800 antialiased;
+    @apply m-0 bg-slate-100 font-sans text-[15px] leading-6 text-slate-800 antialiased;
   }
   label {
-    @apply text-sm font-medium text-slate-700;
+    @apply block text-sm font-semibold text-slate-700;
   }
   input,
   select,
   textarea {
-    @apply mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100;
+    @apply mt-1.5 min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500;
+  }
+  textarea {
+    @apply resize-y;
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply min-h-0 accent-blue-600 shadow-none focus:ring-2 focus:ring-blue-200;
   }
   button {
-    @apply transition;
+    @apply transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200;
+  }
+  a {
+    @apply rounded-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200;
   }
 }
 @layer components {
   .card {
-    @apply rounded-xl border border-slate-200 bg-white p-5 shadow-sm;
+    @apply rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm shadow-slate-200/50 sm:p-5;
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-blue-600 text-white hover:bg-blue-700;
+    @apply btn bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800;
   }
   .btn-secondary {
-    @apply btn border border-slate-300 bg-white hover:bg-slate-50;
+    @apply btn border border-slate-300 bg-white text-slate-700 shadow-sm hover:border-slate-400 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800;
+  }
+  .btn-warning {
+    @apply btn bg-amber-500 text-white shadow-sm hover:bg-amber-600 active:bg-amber-700;
+  }
+  .btn-ghost {
+    @apply btn text-slate-600 hover:bg-slate-100 hover:text-slate-950;
+  }
+  .icon-btn {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200;
   }
   .page-title {
-    @apply text-2xl font-bold tracking-tight text-slate-900;
+    @apply text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl;
+  }
+  .page-subtitle {
+    @apply mt-1.5 max-w-3xl text-sm leading-6 text-slate-500 sm:text-base;
   }
   .section-title {
-    @apply text-lg font-semibold text-slate-900;
+    @apply text-lg font-semibold tracking-tight text-slate-950 sm:text-xl;
   }
   .table-wrap {
-    @apply overflow-x-auto rounded-xl border border-slate-200 bg-white;
+    @apply max-w-full overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/40;
   }
   table {
-    @apply w-full text-left text-sm;
+    @apply min-w-[680px] w-full border-separate border-spacing-0 text-left text-sm;
   }
   th {
-    @apply bg-slate-50 px-4 py-3 font-semibold text-slate-600;
+    @apply sticky top-0 z-10 whitespace-nowrap border-b border-slate-200 bg-slate-50 px-4 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-600;
   }
   td {
-    @apply border-t border-slate-100 px-4 py-3;
+    @apply border-b border-slate-100 px-4 py-3.5 align-middle text-slate-700;
+  }
+  tbody tr {
+    @apply transition-colors hover:bg-slate-50/80;
+  }
+  tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  .status-pill {
+    @apply inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold;
   }
 }

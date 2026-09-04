@@ -6,6 +6,8 @@ import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import type { Project, Report, User } from "../../types";
 import { formatTimestamp } from "../../utils/dates";
+import { FilePlus2, Filter, RotateCcw, Search } from "lucide-react";
+import { PageHeader } from "../../components/common/Ui";
 export function ReportList() {
   const { user } = useAuth(),
     manager = user?.role !== "TEAM_MEMBER";
@@ -64,24 +66,21 @@ export function ReportList() {
     void load();
   }, [load]);
   return (
-    <div className="space-y-5">
-      <div className="flex justify-between">
-        <div>
-          <h1 className="page-title">
-            {manager ? "Team reports" : "My reports"}
-          </h1>
-          <p className="text-slate-500">
-            Filter and review weekly submissions.
-          </p>
+    <div className="space-y-6">
+      <PageHeader
+        description="Filter, review, and follow the status of weekly submissions."
+        icon={Search}
+        title={manager ? "Team reports" : "My reports"}
+        action={!manager ? <Link to="/reports/new" className="btn-primary"><FilePlus2 size={17} />New report</Link> : undefined}
+      />
+      <div className="card">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Filter size={17} />Filters</div>
+          {Object.values(filters).some(Boolean) && <button className="btn-ghost" type="button" onClick={() => { setPage(1); setFilters({ status: "", projectId: "", userId: "", startDate: "", endDate: "" }); }}><RotateCcw size={16} />Clear</button>}
         </div>
-        {!manager && (
-          <Link to="/reports/new" className="btn-primary">
-            New report
-          </Link>
-        )}
-      </div>
-      <div className="card grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <select
+          aria-label="Report status"
           value={filters.status}
           onChange={(e) => changeFilter("status", e.target.value)}
         >
@@ -96,6 +95,7 @@ export function ReportList() {
           ))}
         </select>
         <select
+          aria-label="Project"
           value={filters.projectId}
           onChange={(e) => changeFilter("projectId", e.target.value)}
         >
@@ -108,6 +108,7 @@ export function ReportList() {
         </select>
         {manager && (
           <select
+            aria-label="Team member"
             value={filters.userId}
             onChange={(e) => changeFilter("userId", e.target.value)}
           >
@@ -133,6 +134,7 @@ export function ReportList() {
           value={filters.endDate}
           onChange={(e) => changeFilter("endDate", e.target.value)}
         />
+        </div>
       </div>
       {err ? (
         <ErrorBox message={err} />

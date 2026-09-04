@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Bot, Send, Sparkles, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 import { api, errorMessage } from "../../api/client";
+import { PageHeader } from "../../components/common/Ui";
 
 interface AssistantAnswer {
   title: string;
@@ -80,8 +81,8 @@ export function AiAssistantPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="hidden">
         <div className="flex items-center gap-2">
           <Sparkles className="text-blue-600" />
           <h1 className="page-title">AI Manager Assistant</h1>
@@ -90,6 +91,7 @@ export function AiAssistantPage() {
           Ask questions grounded in submitted WeekFlow reports.
         </p>
       </div>
+      <PageHeader icon={Sparkles} title="AI Manager Assistant" description="Ask questions grounded in submitted WeekFlow reports." />
       <div className="card">
           <div className="mb-4 flex items-center gap-3">
             <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
@@ -106,7 +108,7 @@ export function AiAssistantPage() {
           <div className="grid gap-2 sm:grid-cols-2">
             {examples.map((example) => (
               <button
-                className="rounded-lg border p-3 text-left text-sm hover:border-blue-300 hover:bg-blue-50"
+                className="min-h-14 rounded-xl border border-slate-200 bg-white p-3 text-left text-sm font-medium text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-800"
                 disabled={sending}
                 key={example}
                 onClick={() => setMessage(example)}
@@ -117,7 +119,7 @@ export function AiAssistantPage() {
           </div>
         </div>
       {!!messages.length && (
-        <div className="card max-h-[55vh] space-y-4 overflow-y-auto">
+        <div className="card max-h-[55vh] space-y-5 overflow-y-auto bg-slate-50/60" aria-live="polite">
           {messages.map((item, index) => (
             <div
               className={`flex gap-3 ${item.role === "user" ? "justify-end" : "justify-start"}`}
@@ -129,7 +131,7 @@ export function AiAssistantPage() {
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-xl p-4 text-sm ${item.role === "user" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
+                className={`max-w-[85%] rounded-2xl p-4 text-sm shadow-sm sm:max-w-[80%] ${item.role === "user" ? "rounded-tr-md bg-blue-600 text-white" : "rounded-tl-md border border-slate-200 bg-white text-slate-700"}`}
               >
                 {item.answer ? (
                   <div>
@@ -186,7 +188,7 @@ export function AiAssistantPage() {
           )}
         </div>
       )}
-      <form className="card flex items-end gap-3" onSubmit={send}>
+      <form className="card flex flex-col items-stretch gap-3 sm:flex-row sm:items-end" onSubmit={send}>
         <label className="flex-1">
           Ask about team reports
           <textarea
@@ -198,7 +200,7 @@ export function AiAssistantPage() {
           />
         </label>
         <button
-          className="btn-primary mb-0.5 gap-2"
+          className="btn-primary mb-0.5 w-full gap-2 sm:w-auto"
           disabled={!message.trim() || sending}
           type="submit"
         >

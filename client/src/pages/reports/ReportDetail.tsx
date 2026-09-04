@@ -7,7 +7,8 @@ import { ErrorBox, Loading } from "../../components/common/States";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Report } from "../../types";
 import { formatTimestamp } from "../../utils/dates";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Edit3, History, MessageSquareWarning } from "lucide-react";
+import { PageHeader } from "../../components/common/Ui";
 export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
   const { id } = useParams(),
     location = useLocation(),
@@ -70,7 +71,7 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
             ? "Back to dashboard"
             : "Back to reports"}
       </Link>
-      <div className="flex flex-wrap justify-between gap-3">
+      <div className="hidden">
         <div>
           <h1 className="page-title">Weekly report</h1>
           <p className="text-slate-500">
@@ -83,9 +84,11 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
           </Link>
         )}
       </div>
+      <PageHeader title="Weekly report" description="Current content, review history, and submitted versions." icon={History} action={editable ? <Link to={`/reports/${r.id}/edit`} className="btn-primary"><Edit3 size={17} />Edit report</Link> : undefined} />
       {r.status === "NEEDS_CORRECTION" && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
-          <b>Manager feedback:</b> {r.reviews[0]?.comment}
+        <div className="flex gap-3 rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950">
+          <MessageSquareWarning className="mt-0.5 shrink-0" size={20} />
+          <p><b>Manager feedback:</b> {r.reviews[0]?.comment}</p>
         </div>
       )}
       {selected && (
@@ -98,27 +101,27 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
       {reviewMode && r.status === "SUBMITTED" && (
         <div className="card">
           <h2 className="section-title">Manager review</h2>
-          <textarea
+          <label className="mt-4 block">Review comment<textarea
             className="mt-3"
             rows={3}
             placeholder="Required when requesting changes"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-          />
-          <div className="mt-3 flex gap-3">
+          /></label>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <button
               className="btn-primary bg-emerald-600 hover:bg-emerald-700"
               disabled={reviewing}
               onClick={() => action("approve")}
             >
-              Approve
+              <CheckCircle2 size={17} />Approve
             </button>
             <button
               className="btn-primary bg-amber-600 hover:bg-amber-700"
               disabled={reviewing || !comment.trim()}
               onClick={() => action("request-changes")}
             >
-              Request changes
+              <MessageSquareWarning size={17} />Request changes
             </button>
           </div>
         </div>
@@ -141,10 +144,10 @@ export function ReportDetail({ reviewMode = false }: { reviewMode?: boolean }) {
               onClick={() => setSelected(v)}
               className={`mb-2 block w-full rounded-lg p-3 text-left text-sm ${selected?.id === v.id ? "bg-blue-100 ring-2 ring-blue-300" : "bg-slate-50 hover:bg-blue-50"}`}
             >
-              <b>Version {v.versionNumber}</b>
-              <span className="float-right text-slate-500">
+              <span className="flex flex-col justify-between gap-1 sm:flex-row"><b>Version {v.versionNumber}</b>
+              <span className="text-slate-500">
                 {formatTimestamp(v.submittedAt)}
-              </span>
+              </span></span>
             </button>
           ))}
         </div>

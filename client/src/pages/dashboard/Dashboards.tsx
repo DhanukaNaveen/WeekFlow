@@ -14,10 +14,22 @@ import {
   Line,
   Legend,
 } from "recharts";
+import {
+  AlertTriangle,
+  CalendarCheck2,
+  ChartNoAxesCombined,
+  CheckCircle2,
+  ClipboardCheck,
+  Clock3,
+  FilePlus2,
+  Gauge,
+  UsersRound,
+} from "lucide-react";
 import { api, errorMessage } from "../../api/client";
 import { useAuth } from "../../contexts/AuthContext";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { StatusBadge } from "../../components/common/StatusBadge";
+import { MetricCard, PageHeader } from "../../components/common/Ui";
 export function Dashboard() {
   const { user } = useAuth();
   return user?.role === "TEAM_MEMBER" ? (
@@ -50,54 +62,59 @@ function MemberDashboard() {
     : { label: "Create report", to: "/reports/new" };
   return (
     <div className="space-y-6">
-      <div>
-        <div>
-          <h1 className="page-title">My weekly overview</h1>
-          <p className="text-slate-500">
-            Stay on top of submissions and feedback.
-          </p>
-        </div>
-      </div>
-      <div className="card flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p className="text-sm text-slate-500">Current week report</p>
-          <p className="mt-1 font-semibold">
-            {d.current?.project.name ?? "No report started"}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {d.current ? (
-            <StatusBadge status={d.current.status} />
-          ) : (
-            <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-700">
-              NOT STARTED
-            </span>
-          )}
-          <Link
-            to={currentAction.to}
-            state={{ fromDashboard: true }}
-            className="btn-primary"
-          >
-            {currentAction.label}
-          </Link>
+      <PageHeader
+        description="Stay on top of your weekly submission and manager feedback."
+        icon={CalendarCheck2}
+        title="My weekly overview"
+      />
+      <div className="card overflow-hidden border-blue-100 bg-gradient-to-br from-white to-blue-50/60">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-blue-700">
+              Current week report
+            </p>
+            <p className="mt-1 truncate text-xl font-bold text-slate-950">
+              {d.current?.project.name ?? "No report started"}
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Complete and submit your report before the week closes.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <StatusBadge status={d.current?.status ?? "NOT_STARTED"} />
+            <Link
+              to={currentAction.to}
+              state={{ fromDashboard: true }}
+              className="btn-primary w-full sm:w-auto"
+            >
+              {!d.current && <FilePlus2 size={17} />}
+              {currentAction.label}
+            </Link>
+          </div>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        {[
-          ["Pending approval", d.summary.pendingApproval],
-          ["Needs attention", d.summary.needsAttention],
-        ].map((x) => (
-          <div className="card" key={x[0]}>
-            <p className="text-sm text-slate-500">{x[0]}</p>
-            <p className="mt-2 text-3xl font-bold">{x[1]}</p>
-          </div>
-        ))}
+        <MetricCard
+          help="Submitted reports waiting for manager review."
+          icon={Clock3}
+          label="Pending approval"
+          value={d.summary.pendingApproval}
+        />
+        <MetricCard
+          help="Reports requiring corrections before approval."
+          icon={AlertTriangle}
+          label="Needs attention"
+          tone="amber"
+          value={d.summary.needsAttention}
+        />
       </div>
       {d.current?.status === "NEEDS_CORRECTION" && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-          <b>Manager feedback:</b> {d.current.reviews[0]?.comment}
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <p>
+            <b>Manager feedback:</b> {d.current.reviews[0]?.comment}
+          </p>
           <Link
-            className="ml-3 text-blue-700 underline"
+            className="shrink-0 font-semibold text-amber-800 underline decoration-amber-400 underline-offset-4"
             to={`/reports/${d.current.id}/edit`}
           >
             Update report
@@ -160,51 +177,63 @@ function ManagerDashboard() {
     {
       label: "Reports submitted this week",
       value: d.summary.submittedThisWeek,
+      icon: ClipboardCheck,
+      tone: "blue" as const,
       help: "Submission date is within this Monday–Sunday.",
     },
     {
       label: "Current-week compliance",
       value: `${d.summary.complianceRate}%`,
+      icon: Gauge,
+      tone: "violet" as const,
       help: "Active members who submitted this week's report.",
     },
     {
       label: "Members pending",
       value: d.summary.pending,
+      icon: UsersRound,
+      tone: "rose" as const,
       help: "Active members yet to submit this week's report.",
     },
     {
       label: "Current-week approved",
       value: d.summary.approved,
+      icon: CheckCircle2,
+      tone: "emerald" as const,
       help: "This week's reports with Approved status.",
     },
     {
       label: "Current-week corrections",
       value: d.summary.needsCorrection,
+      icon: AlertTriangle,
+      tone: "amber" as const,
       help: "This week's reports that need correction.",
     },
     {
       label: "Current-week open blockers",
       value: d.summary.openBlockers,
+      icon: AlertTriangle,
+      tone: "rose" as const,
       help: "Open blocker entries in this week's reports.",
     },
   ];
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="page-title">Team dashboard</h1>
-        <p className="text-slate-500">
-          Current-week reporting health and workload insights.
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <PageHeader
+        description="Current-week reporting health and all-time workload insights."
+        icon={ChartNoAxesCombined}
+        title="Team dashboard"
+      />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {cards.map((card) => (
-          <div className="card" key={card.label}>
-            <p className="text-xs font-medium text-slate-600">{card.label}</p>
-            <p className="mt-2 text-2xl font-bold">{card.value}</p>
-            <p className="mt-2 text-xs leading-5 text-slate-400">
-              {card.help}
-            </p>
-          </div>
+          <MetricCard
+            help={card.help}
+            icon={card.icon}
+            key={card.label}
+            label={card.label}
+            tone={card.tone}
+            value={card.value}
+          />
         ))}
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
@@ -316,10 +345,13 @@ function ManagerDashboard() {
             {d.recentActivity.map((a: any) => (
               <div
                 key={a.id}
-                className="flex justify-between border-b pb-3 text-sm last:border-0"
+                className="flex items-start gap-3 border-b border-slate-100 pb-3 text-sm last:border-0 last:pb-0"
               >
-                <span>{a.description}</span>
-                <time className="text-slate-400">
+                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                <span className="min-w-0 flex-1 text-slate-700">
+                  {a.description}
+                </span>
+                <time className="shrink-0 text-xs text-slate-500 sm:text-sm">
                   {new Date(a.createdAt).toLocaleString()}
                 </time>
               </div>
@@ -340,7 +372,7 @@ function Chart({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card">
+    <div className="card min-w-0 overflow-hidden">
       <div className="mb-5">
         <h2 className="section-title">{title}</h2>
         <p className="mt-1 text-sm text-slate-500">{description}</p>

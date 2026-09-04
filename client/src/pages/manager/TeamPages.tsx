@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, UsersRound } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { api, errorMessage } from "../../api/client";
 import { Empty, ErrorBox, Loading } from "../../components/common/States";
 import { StatusBadge } from "../../components/common/StatusBadge";
 import type { User } from "../../types";
+import { Avatar, MetricCard, PageHeader } from "../../components/common/Ui";
 export function TeamList() {
   const [u, setU] = useState<User[]>(),
     [err, setErr] = useState("");
@@ -17,8 +18,8 @@ export function TeamList() {
   if (err) return <ErrorBox message={err} />;
   if (!u) return <Loading />;
   return (
-    <div className="space-y-5">
-      <h1 className="page-title">Team members</h1>
+    <div className="space-y-6">
+      <PageHeader icon={UsersRound} title="Team members" description="View member assignments, activity, and report history." />
       {!u.length ? (
         <Empty />
       ) : (
@@ -26,17 +27,13 @@ export function TeamList() {
           {u.map((x) => (
             <Link
               to={`/team/${x.id}`}
-              className="card hover:border-blue-300"
+              className="card group transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
               key={x.id}
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
-                {x.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </div>
-              <h2 className="mt-3 font-semibold">{x.name}</h2>
+              <Avatar name={x.name} />
+              <h2 className="mt-3 font-semibold text-slate-950 group-hover:text-blue-700">{x.name}</h2>
               <p className="text-sm text-slate-500">{x.email}</p>
+              <span className={`mt-4 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${x.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{x.isActive ? "Active" : "Inactive"}</span>
             </Link>
           ))}
         </div>
@@ -64,20 +61,10 @@ export function TeamProfile() {
         <ArrowLeft size={17} />
         Back to team members
       </Link>
-      <div>
-        <h1 className="page-title">{u.name}</h1>
-        <p className="text-slate-500">{u.email}</p>
-      </div>
+      <div className="card flex items-center gap-4"><Avatar name={u.name} size="lg" /><div className="min-w-0"><h1 className="page-title truncate">{u.name}</h1><p className="truncate text-slate-500">{u.email}</p><span className={`status-pill mt-2 ${u.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{u.isActive ? "Active" : "Inactive"}</span></div></div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Object.entries(u.statistics || {}).map(([k, v]) => (
-          <div className="card" key={k}>
-            <p className="text-xs capitalize text-slate-500">
-              {k.replace(/([A-Z])/g, " $1")}
-            </p>
-            <p className="mt-2 text-2xl font-bold">
-              {typeof v === "number" ? Math.round(v * 10) / 10 : v}
-            </p>
-          </div>
+          <MetricCard key={k} label={k.replace(/([A-Z])/g, " $1")} value={typeof v === "number" ? Math.round(v * 10) / 10 : String(v)} />
         ))}
       </div>
       <section className="card">

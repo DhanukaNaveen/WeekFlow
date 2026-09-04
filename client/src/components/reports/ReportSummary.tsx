@@ -31,13 +31,13 @@ export function ReportSummary({
   ] as const;
   return (
     <div className="space-y-5">
-      <div className="card">
+      <div className="card border-blue-100 bg-gradient-to-br from-white to-blue-50/40">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-slate-500">
               {report.user?.name} · {report.project?.name}
             </p>
-            <h2 className="text-xl font-bold">
+            <h2 className="mt-1 text-xl font-bold text-slate-950">
               {formatWeekRange(data.weekStartDate, data.weekEndDate)}
             </h2>
           </div>
@@ -48,7 +48,7 @@ export function ReportSummary({
         )}
         {data.links?.map((x: string) => (
           <a
-            className="mr-3 mt-2 inline-block text-sm text-blue-600"
+            className="mr-3 mt-3 inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-900"
             href={x}
             target="_blank"
             key={x}
@@ -59,13 +59,13 @@ export function ReportSummary({
       </div>
       {sections.map(([title, items, render]) => (
         <div className="card" key={title}>
-          <h3 className="section-title mb-3">{title}</h3>
+          <div className="mb-4 flex items-center justify-between gap-3"><h3 className="section-title">{title}</h3><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{items?.length || 0}</span></div>
           {!items?.length ? (
             <p className="text-sm text-slate-400">None reported</p>
           ) : (
             <div className="space-y-2">
               {items.map((x: any, i: number) => (
-                <div key={x.id || i} className="rounded-lg bg-slate-50 p-3">
+                <div key={x.id || i} className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                   <p className="font-medium">{render(x)}</p>
                   {x.description && (
                     <p className="mt-1 text-sm text-slate-600">

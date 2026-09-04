@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -17,7 +17,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Toaster position="top-right" />
+        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 30px rgba(15,23,42,.12)" } }} />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -48,7 +48,7 @@ export default function App() {
           </Route>
           <Route
             path="*"
-            element={<div className="p-10">Page not found</div>}
+            element={<main className="flex min-h-screen items-center justify-center bg-slate-100 p-6"><div className="card max-w-md text-center"><p className="text-sm font-bold uppercase tracking-widest text-blue-600">404</p><h1 className="mt-2 text-3xl font-bold text-slate-950">Page not found</h1><p className="mt-2 text-slate-500">The page you requested does not exist or is no longer available.</p><Link className="btn-primary mt-6" to="/">Return to dashboard</Link></div></main>}
           />
         </Routes>
       </AuthProvider>

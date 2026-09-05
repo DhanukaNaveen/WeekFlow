@@ -1,4 +1,4 @@
-# WeekFlow Entity Relationship Diagram — Chen Notation
+# WeekFlow Entity Relationship Diagram 
 
 ```mermaid
 %%{init: {"flowchart": {"curve": "linear", "nodeSpacing": 24, "rankSpacing": 52}, "themeVariables": {"fontFamily": "Arial, sans-serif", "fontSize": "15px", "lineColor": "#64748b", "primaryTextColor": "#0f172a"}}}%%
